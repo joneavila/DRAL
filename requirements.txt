@@ -1,0 +1,10 @@
+certifi @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_05nm_gqf36/croots/recipe/certifi_1663615689491/work/certifi
+et-xmlfile==1.1.0
+numpy==1.23.3
+openpyxl==3.0.10
+pandas==1.5.0
+pympi-ling==1.70.2
+python-dateutil==2.8.2
+pytz==2022.2.1
+six==1.16.0
+sox==1.4.1
