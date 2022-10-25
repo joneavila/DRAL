@@ -1,10 +1,23 @@
+black @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_d0nhgmyc3l/croots/recipe/black_1660237813406/work
 certifi @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_05nm_gqf36/croots/recipe/certifi_1663615689491/work/certifi
+click @ file:///opt/concourse/worker/volumes/live/2d66025a-4d79-47c4-43be-6220928b6c82/volume/click_1646056610594/work
 et-xmlfile==1.1.0
+flake8 @ file:///opt/conda/conda-bld/flake8_1648129545443/work
+importlib-metadata @ file:///opt/concourse/worker/volumes/live/a8740f82-0523-4b08-5bb5-afa0c929f5e0/volume/importlib-metadata_1648562424930/work
+mccabe @ file:///opt/conda/conda-bld/mccabe_1644221741721/work
+mypy-extensions==0.4.3
 numpy==1.23.3
 openpyxl==3.0.10
 pandas==1.5.0
+pathspec @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_e2t1r2kdq7/croots/recipe/pathspec_1659627124303/work
+platformdirs @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_7fs8_2xgrm/croots/recipe/platformdirs_1662711383474/work
+pycodestyle @ file:///tmp/build/80754af9/pycodestyle_1636635402688/work
+pyflakes @ file:///tmp/build/80754af9/pyflakes_1636644436481/work
 pympi-ling==1.70.2
 python-dateutil==2.8.2
 pytz==2022.2.1
 six==1.16.0
 sox==1.4.1
+tomli @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_90762ba4-f339-47e8-bd29-416854a59b233d27hku_/croots/recipe/tomli_1657175507767/work
+tqdm==4.64.1
+zipp @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_b279673d-f037-44c7-8773-c5a6b6f51037d3wfr9cq/croots/recipe/zipp_1652341773612/work
