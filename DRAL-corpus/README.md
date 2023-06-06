@@ -30,6 +30,12 @@ tar -cvf "DRAL-4.0.tgz" "DRAL-4.0/"
 
 Compare files in a new release to a previous release with `diff`. To copy only new files for a new release, copy the files of the new release into the previous release, select "skip" for duplicate files, then in the previous release sort by Date Created.
 
+```zsh
+python make_release.py -i <path_to_input_directory> -o <path_to_output_directory>
+```
+
+See documentation in `make_release.py` for more details.
+
 <!--
 Print corpus statistics, such as the number of short and long fragments and
 their total duration, with: `print_stats.py`.
