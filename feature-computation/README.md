@@ -1,21 +1,25 @@
 # feature-computation
 
-This directory contains the code for computing prosodic (Midlevel Toolkit) features of DRAL short fragments and plotting prosodic features in an interactive figure.
+This directory contains code for computing prosodic features
+of DRAL utterances ("short fragments") using the Mid-level Toolkit.
 
-## Computing prosodic features of DRAL short fragments
+To estimate the prosody similarity
+of utterances, see [*Estimate the prosodic dissimilarity of utterances*](../modeling/).
 
-1. Add this directory to MATLAB path.
-2. Add the Midlevel Toolkit directory to MATLAB path.
-3. Prepare the DRAL data for feature computation. Follow the workflow diagram in
-   [../DRAL/README.md](../DRAL/README.md).
-4. Run `computeFeatures.m`. For more information, see documentation in script.
+## Compute prosodic features of DRAL utterances
 
-## Plotting prosodic features in an interactive figure
+1. Gather the DRAL data.
+   - (Option 1) Download the latest DRAL release (see [*Download the DRAL corpus*](../README.md)).
+   - (Option 2) Create a DRAL release from raw data (see [*Collect similar data following the DRAL protocol*](../README.md)).
+2. Setup MATLAB and Python (see [*Setup*](../README.md)).
+3. Prepare the data for feature computation by running the Python script `prep_for_feature_comp.py`. This script concatenates utterances into new audios, estimates pitch with REAPER, and modifies the corpus metadata.
+4. Compute the features by running the MATLAB function `computeFeatures.m`. This script computes prosodic features using the Mid-level Toolkit and modified Mid-level Toolkit functions.
 
-To plot the prosodic features of a DRAL fragment, run `plotFragFeatures.m`.
+## Plot prosodic features in an interactive figure
 
-- [ ] Update documentation in `plotFeatures.m`.
-- [ ] Update documentation in `featuresToTimeTables.m`.
+To plot the prosodic features of a DRAL utterance, run the MATLAB function `plotFragFeatures.m`.
+
+### Preview
 
 ![plotFeatures.m example](./images/plot-features-example.png)
 
@@ -23,15 +27,13 @@ To plot the prosodic features of a DRAL fragment, run `plotFragFeatures.m`.
 
 See [./test-audio/README.md](./test-audio/README.md).
 
-## Modifications, contributions to Midlevel Toolkit
+## Modifications to the Mid-level Toolkit
 
 ### Modified pitch computation
 
 The script `lookUpOrComputePitchModified.m` is modified from Midlevel Toolkit `lookupOrComputePitch.m`. The function `lookUpOrComputePitchModified` removes the fallback to VOICEBOX `fxrapt` enforcing REAPER for pitch tracking.
 
 For more information, see documentation in `lookUpOrComputePitchModified.m`.
-
-- [ ] Update documentation in `lookUpOrComputePitchModified.m`.
 
 ### Modified CPPS computation
 

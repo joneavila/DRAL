@@ -6,6 +6,8 @@ This repository contains the code used in creating the Dialogs Re-enacted Across
 
 Download the DRAL corpus releases from the [releases page](https://cs.utep.edu/nigel/dral/).
 
+Note: Releases are incremental. To get the latest release, download each release in sequence, merging the files of each release into the previous.
+
 ## Collect similar data following the DRAL protocol
 
 The DRAL protocol is described in our [technical report](https://cs.utep.edu/nigel/papers/dral-techreport.pdf). For post-processing, see the `DRAL-corpus` subdirectory.

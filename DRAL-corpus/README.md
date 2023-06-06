@@ -100,9 +100,6 @@ duration
  maximum = 0 days 00:00:22.783000
 ```
 
-## Prepare DRAL data for feature computation
-
-After post-processing, prepare the data for feature computation with `prep_for_feature_comp.py`. For feature computation, see the `feature-computation` directory.
 
 ## Transcribe utterances
 
