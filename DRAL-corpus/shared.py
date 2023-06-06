@@ -1,4 +1,5 @@
 # Mostly constants shared across Python scripts.
+
 class MarkupTier:
     tiers_dict = {}
 

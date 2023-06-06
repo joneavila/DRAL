@@ -1,24 +1,32 @@
 anyascii==0.3.1
 appdirs==1.4.4
+attrs==22.2.0
 audioread==3.0.0
 Babel==2.11.0
 black @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_d0nhgmyc3l/croots/recipe/black_1660237813406/work
-certifi @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_05nm_gqf36/croots/recipe/certifi_1663615689491/work/certifi
-cffi==1.15.1
+brotlipy==0.7.0
+certifi @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_0ek9yztvu3/croot/certifi_1665076692562/work/certifi
+cffi @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_62rp5d8fd4/croots/recipe/cffi_1659598655556/work
 charset-normalizer==2.1.1
 click @ file:///opt/concourse/worker/volumes/live/2d66025a-4d79-47c4-43be-6220928b6c82/volume/click_1646056610594/work
 contourpy==1.0.6
 coqpit==0.0.16
+cryptography @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_3evwafgyg8/croot/cryptography_1665612651044/work
 cycler==0.11.0
 Cython==0.29.28
 dateparser==1.1.3
 decorator==5.1.1
 docopt==0.6.2
+dtw==1.4.0
+dtw-python==1.3.0
 et-xmlfile==1.1.0
 ffmpeg-python==0.2.0
 filelock==3.8.0
 flake8 @ file:///opt/conda/conda-bld/flake8_1648129545443/work
+flake8-bugbear==22.12.6
+flake8-import-order==0.18.2
 Flask==2.2.2
+flit_core @ file:///opt/conda/conda-bld/flit-core_1644941570762/work/source/flit_core
 fonttools==4.38.0
 fsspec==2022.11.0
 future==0.18.2
@@ -35,7 +43,7 @@ gruut-lang-pt==2.0.0
 gruut-lang-ru==2.0.0
 gruut-lang-sv==2.0.0
 huggingface-hub==0.10.1
-idna==3.4
+idna @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_00jf0h4zbt/croot/idna_1666125573348/work
 importlib-metadata @ file:///opt/concourse/worker/volumes/live/a8740f82-0523-4b08-5bb5-afa0c929f5e0/volume/importlib-metadata_1648562424930/work
 inflect==5.6.0
 itsdangerous==2.1.2
@@ -48,8 +56,11 @@ librosa==0.8.0
 llvmlite==0.38.1
 MarkupSafe==2.1.1
 matplotlib==3.6.2
-mccabe @ file:///opt/conda/conda-bld/mccabe_1644221741721/work
+mccabe==0.6.1
 mecab-python3==1.0.5
+mkl-fft==1.3.1
+mkl-random @ file:///opt/concourse/worker/volumes/live/a9eca864-069c-4240-73c8-4e51b036a10d/volume/mkl_random_1639994047876/work
+mkl-service==2.4.0
 more-itertools==9.0.0
 mypy-extensions==0.4.3
 networkx==2.8.8
@@ -65,13 +76,15 @@ platformdirs @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/a
 pooch==1.6.0
 protobuf==3.19.6
 pycodestyle @ file:///tmp/build/80754af9/pycodestyle_1636635402688/work
-pycparser==2.21
+pycparser @ file:///tmp/build/80754af9/pycparser_1636541352034/work
 pyflakes @ file:///tmp/build/80754af9/pyflakes_1636644436481/work
 pympi-ling==1.70.2
 pynndescent==0.5.8
+pyOpenSSL @ file:///opt/conda/conda-bld/pyopenssl_1643788558760/work
 pyparsing==3.0.9
 pypinyin==0.47.1
 pysbd==0.3.4
+PySocks @ file:///Users/builder/ci_310/pysocks_1642536366386/work
 python-crfsuite==0.9.8
 python-dateutil==2.8.2
 pytz==2022.2.1
@@ -79,11 +92,11 @@ pytz-deprecation-shim==0.1.0.post0
 pyworld==0.2.10
 PyYAML==6.0
 regex==2022.3.2
-requests==2.28.1
+requests @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_516b78ce-034d-4395-b9b5-1d78c2847384qtnol99l/croots/recipe/requests_1657734628886/work
 resampy==0.4.2
 scikit-learn==1.1.3
 scipy==1.9.3
-six==1.16.0
+six @ file:///tmp/build/80754af9/six_1644875935023/work
 soundfile==0.11.0
 sox==1.4.1
 tensorboardX==2.5.1
@@ -92,16 +105,18 @@ tokenizers==0.13.2
 tomli @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_90762ba4-f339-47e8-bd29-416854a59b233d27hku_/croots/recipe/tomli_1657175507767/work
 torch==1.13.0
 torchaudio==0.13.0
+torchinfo==1.7.1
+torchvision==0.14.0
 tqdm==4.64.1
 trainer==0.0.16
 transformers==4.24.0
 TTS==0.8.0
-typing_extensions==4.4.0
+typing_extensions @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_4b7xacf029/croot/typing_extensions_1669923792404/work
 tzdata==2022.6
 tzlocal==4.2
 umap-learn==0.5.1
 unidic-lite==1.0.8
-urllib3==1.26.12
+urllib3 @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_7f7kb5tudl/croot/urllib3_1666298941688/work
 Werkzeug==2.2.2
-whisper @ git+https://github.com/openai/whisper.git@9f70a352f9f8630ab3aa0d06af5cb9532bd8c21d
+whisper @ git+https://github.com/openai/whisper.git@28769fcfe50755a817ab922a7bc83483159600a9
 zipp @ file:///private/var/folders/sy/f16zz6x50xz3113nwtb9bvq00000gp/T/abs_b279673d-f037-44c7-8773-c5a6b6f51037d3wfr9cq/croots/recipe/zipp_1652341773612/work

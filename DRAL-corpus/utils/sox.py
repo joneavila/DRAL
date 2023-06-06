@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import pandas as pd
-from sox import Combiner, Transformer
+import sox
 
 
 def trim_remix_audio(
@@ -24,7 +24,7 @@ def trim_remix_audio(
             Defaults to None. For more information, see SoX documentation:
             https://sox.sourceforge.net/sox.html
     """
-    transformer = Transformer()
+    transformer = sox.Transformer()
 
     time_start_seconds = time_start.total_seconds()
     time_end_seconds = time_end.total_seconds()
@@ -47,7 +47,7 @@ def concatenate_audios(paths_input: list[Path], path_output: Path) -> None:
         path_output (Path): Path to output audio.
     """
 
-    combiner = Combiner()
+    combiner = sox.Combiner()
     combiner.input_format = None  # Assume all input files are the same format.
     combiner.convert(16000)
 
@@ -56,13 +56,20 @@ def concatenate_audios(paths_input: list[Path], path_output: Path) -> None:
     combiner.build(paths_input_string, path_output_string, "concatenate")
 
 
+def is_silent(path_audio: Path) -> bool:
+    return sox.file_info.silent(str(path_audio))  # default threshold
+
+
 def is_mostly_silence(
     time_start: pd.Timedelta,
     time_end: pd.Timedelta,
     path_input: Path,
     remix_dict: dict = None,
 ) -> bool:
-    """Estimate whether a fragment of an audio is mostly silence.
+    """
+    Estimate whether a fragment of an audio is mostly silence. This function is not very
+    reliable, but is helpful for finding DRAL conversation audios that have been
+    annotated with left and right channels swapped.
 
     Args:
         time_start (pd.Timedelta): Time when fragment begins.
@@ -76,7 +83,7 @@ def is_mostly_silence(
         bool: True if fragment is estimated 95 percent silence.
     """
 
-    transformer = Transformer()
+    transformer = sox.Transformer()
 
     # Trim the audio to just the fragment.
     time_start_seconds = time_start.total_seconds()
@@ -118,8 +125,16 @@ def resample(path_input: str, path_output_str: str, sample_rate_hz: float):
     if path_output.is_file():
         return
 
-    transformer = Transformer()
+    transformer = sox.Transformer()
     transformer.rate(sample_rate_hz)
 
     # make_dirs_in_path(path_audio_resampled.parent)
     transformer.build(path_input, path_output_str)
+
+
+def validate_with_sox(path_audio: Path) -> bool:
+    try:
+        sox.file_info.num_samples(path_audio)
+        return True
+    except sox.core.SoxiError:
+        return False
