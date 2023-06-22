@@ -433,8 +433,11 @@ def _get_markup_dataframes(
     has_expected_value = df_markup["markup_value"].str.fullmatch(
         shared.MARKUP_VAL_RE_PATTERN
     )
+    # TODO Print whitespace in warning, or allow whitespace in markup value.
     if ~has_expected_value.all():
-        print("These markups were ignored because they have an unexpected value")
+        print(
+            "These markups were ignored because they have an unexpected value (whitespace might not be shown here)"
+        )
         print(df_markup.loc[~has_expected_value, ["conv_id", "markup_value"]])
         df_markup = df_markup[has_expected_value]
 
