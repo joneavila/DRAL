@@ -1,16 +1,16 @@
-# Code for Dialogs Re-enacted Across Languages (DRAL)
+# Code for Dialogs Re-enacted Across Languages (DRAL) corpus
 
 This repository contains the code used in creating the Dialogs Re-enacted Across Languages (DRAL) corpus, computing prosodic features of utterances, and modeling the mappings of English and Spanish prosody.
 
 ## Download the DRAL corpus
 
-Download the DRAL corpus releases from the [releases page](https://cs.utep.edu/nigel/dral/).
+Download the DRAL corpus releases from the [releases page](https://www.cs.utep.edu/nigel/dral/).
 
 Note: Releases are incremental. To get the latest release, download each release in sequence, merging the files of each release into the previous.
 
 ## Collect similar data following the DRAL protocol
 
-The DRAL protocol is described in our [technical report](https://cs.utep.edu/nigel/papers/dral-techreport.pdf). For post-processing, see the `DRAL-corpus` subdirectory.
+The DRAL protocol is described in our [technical report](https://www.cs.utep.edu/nigel/papers/dral-techreport.pdf). For post-processing, see the `DRAL-corpus` subdirectory.
 
 ## Compute prosodic features of DRAL utterances, model prosody the mappings of English and Spanish prosody
 
@@ -19,7 +19,6 @@ The code is separated into the following subdirectories. Each subdirectory conta
 - [**`DRAL-corpus`**](DRAL-corpus/) - Code for DRAL post-processing and preparing the data for feature computation. See the included workflow diagram.
 - [**`feature-computation`**](feature-computation/) - Code for computing DRAL conversation fragments prosodic features and prosody representations, and for plotting and validating features.
 - [**`modeling`**](modeling/) - Code for DRAL English and Spanish prosody mapping models, baselines, metrics, and feature correlations.
-
 
 ### Setup
 
@@ -46,7 +45,7 @@ The code is separated into the following subdirectories. Each subdirectory conta
 -->
 ### DRAL technical report
 
-> Nigel G. Ward, Jonathan E. Avila, and Emilia Rivas. 2022. Dialogs Re-enacted Across Languages. University of Texas at El Paso. Retrieved from <https://cs.utep.edu/nigel/papers/dral-techreport.pdf>
+> Nigel G. Ward, Jonathan E. Avila, and Emilia Rivas. 2022. Dialogs Re-enacted Across Languages. University of Texas at El Paso. Retrieved from <https://www.cs.utep.edu/nigel/papers/dral-techreport.pdf>
 
 ## Contributing
 
