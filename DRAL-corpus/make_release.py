@@ -1,4 +1,4 @@
-# This script makes a DRAL release. See help message below.
+# See description and help message below.
 import argparse
 from pathlib import Path
 from shutil import copy
@@ -13,8 +13,6 @@ from utils.sox import is_silent, trim_remix_audio, validate_with_sox
 
 
 def main() -> None:
-
-    # TODO Set index for remaining DataFrames and write to CSV.
 
     dir_this_file = Path(__file__).parent.resolve()
 
@@ -161,14 +159,12 @@ def main() -> None:
     )
 
     # Warn about short fragments that may be silent.
-    # TODO Replace with function in script print_silent_fragments.py
     if args.warn_silence:
         print("Detecting silent short fragments...")
         is_silent_frag = process_map(
             is_silent,
             df_markup_short["audio_path"],
             total=len(df_markup_short),
-            # chunksize=8,
         )
         if any(is_silent_frag):
             print("These fragments may be silent:")
