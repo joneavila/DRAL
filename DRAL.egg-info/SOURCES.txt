@@ -1,6 +1,0 @@
-README.md
-setup.py
-DRAL.egg-info/PKG-INFO
-DRAL.egg-info/SOURCES.txt
-DRAL.egg-info/dependency_links.txt
-DRAL.egg-info/top_level.txt

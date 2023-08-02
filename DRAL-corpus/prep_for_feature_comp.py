@@ -5,10 +5,11 @@ from itertools import product
 from pathlib import Path
 
 import pandas as pd
-import shared
 from tqdm.contrib.concurrent import process_map
 from utils.dirs import make_dirs_in_path_if_not_exist
 from utils.sox import concatenate_audios
+
+import shared
 
 
 def main() -> None:
