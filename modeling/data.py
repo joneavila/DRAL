@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
@@ -74,12 +75,29 @@ def write_metadata(df_frags: pd.DataFrame) -> None:
     df_frags.to_csv(PATH_METADATA_SHORT_FULL)
 
 
-def read_features_en_es():
+def read_features_en_es(
+    path_subset: Optional[Path] = None,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     # Read CSV containing computed features, output of feature computation scripts, and
     # return as two DataFrames, one per language, with matching rows.
+    #
+    # Return a subset if specified. `path_subset` is path to a CSV containing short
+    # fragment IDs.
+
     lang_code_en = "EN"
     lang_code_es = "ES"
     df_features = _features_csv_to_df(PATH_FEATURES)
+
+    # If a subset is specified, keep only those fragments.
+    if path_subset:
+
+        # Read the CSV file at path_subset into a list of strings. The CSV contains only IDs.
+        df_subset = pd.read_csv(path_subset, header=None, names=["frag_id"])
+
+        # Drop rows from df_features with index that are not in df_subset.
+        df_features = df_features[df_features.index.isin(df_subset["frag_id"])]
+
+    # Split the DataFrame into two, one per language. Assume there are matching rows.
     is_en = df_features.index.str.startswith(lang_code_en)
     df_features_en = df_features[is_en]
     frag_ids_en = list(df_features_en.index.values)
@@ -87,6 +105,7 @@ def read_features_en_es():
         frag_id.replace(lang_code_en, lang_code_es) for frag_id in frag_ids_en
     ]
     df_features_es = df_features.loc[frag_ids_es]
+
     return df_features_en, df_features_es
 
 
@@ -97,7 +116,7 @@ def _features_csv_to_df(path_features_csv: Path) -> pd.DataFrame:
     return df_features
 
 
-def feature_cols_by_type(df_features: pd.DataFrame) -> dict:
+def feature_cols_by_type(df_features: pd.DataFrame) -> tuple[dict, dict]:
     cols = list(df_features.columns)
     by_base_feature = {}
     by_span = {}
