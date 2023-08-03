@@ -3,19 +3,16 @@ from pathlib import Path
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
-DIR_ROOT = Path("/Users/jon/Documents/dissertation/")
+DIR_ROOT = Path(__file__).parent.parent.resolve()
 
-# Paths to outputs of make DRAL release script.
+
+# Paths to outputs of DRAL post-processing scripts.
 DIR_RELEASE = DIR_ROOT.joinpath("DRAL-corpus/release")
 PATH_METADATA_SHORT_FULL = DIR_RELEASE.joinpath("fragments-short-full.csv")
 
-# Paths to outputs of MATLAB feature computation script.
-DIR_FEATURES = DIR_RELEASE.joinpath("features")
-PATH_FEATURES_EN = DIR_FEATURES.joinpath("EN-features.csv")
-PATH_FEATURES_ES = DIR_FEATURES.joinpath("ES-features.csv")
-PATH_FEATURES_EN_SYNTHESIS = DIR_FEATURES.joinpath("EN-features-synth.csv")
-PATH_FEATURES_ES_SYNTHESIS = DIR_FEATURES.joinpath("ES-features-synth.csv")
-PATH_SPEAKER_IDS = DIR_FEATURES.joinpath("speaker-ids.csv")
+# Paths to outputs of feature computation scripts.
+PATH_FEATURES = DIR_RELEASE.joinpath("features/features.csv")
+# PATH_SPEAKER_IDS = DIR_FEATURES.joinpath("speaker-ids.csv")
 
 # Paths to outputs of models.
 DIR_EXPERIMENTS = DIR_ROOT.joinpath("modeling/")
@@ -55,13 +52,13 @@ PATH_NAIVE_FEATS_PRED_ES_EN = DIR_NAIVE_OUTPUT.joinpath("ES-to-EN-feats-pred.csv
 FEATURE_BASE_CODE_TO_NAMES = {
     "cr": "creakiness",
     "sr": "speaking rate",
-    "tl": "true low pitch",
-    "th": "true high pitch",
+    "tl": "low pitch",
+    "th": "high pitch",
     "wp": "wide pitch range",
     "np": "narrow pitch range",
-    "vo": "volume",
+    "vo": "intensity",
     "le": "lengthening",
-    "cp": "CPP smoothed",
+    "cp": "CPPS",
     "pd": "peak disalignment",
 }
 
@@ -77,31 +74,20 @@ def write_metadata(df_frags: pd.DataFrame) -> None:
     df_frags.to_csv(PATH_METADATA_SHORT_FULL)
 
 
-def read_features_en():
-    df_features_en = _features_csv_to_df(PATH_FEATURES_EN)
-    return df_features_en
-
-
-def read_features_es():
-    df_features_es = _features_csv_to_df(PATH_FEATURES_ES)
-    return df_features_es
-
-
-def read_features_en_synthesis():
-    df_features_en = _features_csv_to_df(PATH_FEATURES_EN_SYNTHESIS)
-    return df_features_en
-
-
-def read_features_es_synthesis():
-    df_features_es = _features_csv_to_df(PATH_FEATURES_ES_SYNTHESIS)
-    return df_features_es
-
-
 def read_features_en_es():
-    df_features_en = read_features_en()
-    df_features_es = read_features_es()
-    df_features = pd.concat([df_features_en, df_features_es])
-    return df_features
+    # Read CSV containing computed features, output of feature computation scripts, and
+    # return as two DataFrames, one per language, with matching rows.
+    lang_code_en = "EN"
+    lang_code_es = "ES"
+    df_features = _features_csv_to_df(PATH_FEATURES)
+    is_en = df_features.index.str.startswith(lang_code_en)
+    df_features_en = df_features[is_en]
+    frag_ids_en = list(df_features_en.index.values)
+    frag_ids_es = [
+        frag_id.replace(lang_code_en, lang_code_es) for frag_id in frag_ids_en
+    ]
+    df_features_es = df_features.loc[frag_ids_es]
+    return df_features_en, df_features_es
 
 
 def _features_csv_to_df(path_features_csv: Path) -> pd.DataFrame:

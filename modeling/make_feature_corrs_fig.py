@@ -1,10 +1,14 @@
-# Make a figure with feature Pearson correlations and save as an image, one figure per
-# each language pair (EN-EN, EN-ES, ES-EN, ES-ES). Features are computed by MATLAB
-# feature computation script.
+# Make a figure with Pearson correlations between prosodic features, and save as an
+# image. One figure per each language pair (EN-EN, EN-ES, ES-EN, ES-ES).
+#
+# The ES-EN figure will mirror the EN-ES figure.
+#
+# The number of base features (10) is hardcoded.
 
 from pathlib import Path
 
 import data
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -12,8 +16,9 @@ import pandas as pd
 
 def main() -> None:
 
-    df_features_raw_en = data.read_features_en()
-    df_features_raw_es = data.read_features_es()
+    df_features_raw_en, df_features_raw_es = data.read_features_en_es()
+
+    plt.ioff()  # Disable interactive mode.
 
     df_features_en = data.standardize_features(df_features_raw_en)
     df_features_es = data.standardize_features(df_features_raw_es)
@@ -36,37 +41,39 @@ def main() -> None:
     coefs_es_en = coefs[n_features:, 0:n_features]
     coefs_es_es = coefs[n_features:, n_features:]
 
+    # Create the output directory.
+    data.DIR_FEATURE_CORRS.mkdir(parents=True, exist_ok=True)
+
     make_correlations_figure(
         coefs_en_en,
         df_features_en.columns,
         df_features_en.columns,
-        "DRAL EN-EN feature correlations",
-        data.DIR_FEATURE_CORRS.joinpath("feature-correlations-EN-EN-DRAL-4.0.png"),
+        data.DIR_FEATURE_CORRS.joinpath("feature-correlations-en-en.png"),
+        include_coef_labels=False,
     )
 
     make_correlations_figure(
         coefs_en_es,
         df_features_es.columns,
         df_features_en.columns,
-        "DRAL EN-ES feature correlations",
-        data.DIR_FEATURE_CORRS.joinpath("feature-correlations-EN-ES-DRAL-4.0.png"),
+        data.DIR_FEATURE_CORRS.joinpath("feature-correlations-en-es.png"),
+        include_coef_labels=False,
     )
 
-    # Note: The ES-EN figure will mirror the EN-ES figure.
     make_correlations_figure(
         coefs_es_en,
         df_features_en.columns,
         df_features_es.columns,
-        "DRAL ES-EN feature correlations",
-        data.DIR_FEATURE_CORRS.joinpath("feature-correlations-ES-EN-DRAL-4.0.png"),
+        data.DIR_FEATURE_CORRS.joinpath("feature-correlations-es-en.png"),
+        include_coef_labels=False,
     )
 
     make_correlations_figure(
         coefs_es_es,
         df_features_es.columns,
         df_features_es.columns,
-        "DRAL ES-ES feature correlations",
-        data.DIR_FEATURE_CORRS.joinpath("feature-correlations-ES-ES-DRAL-4.0.png"),
+        data.DIR_FEATURE_CORRS.joinpath("feature-correlations-es-es.png"),
+        include_coef_labels=False,
     )
 
 
@@ -74,8 +81,8 @@ def make_correlations_figure(
     coefs: np.ndarray,
     x_labels: pd.Index,
     y_labels: pd.Index,
-    fig_title: str,
     path_output: Path,
+    include_coef_labels: bool = True,
 ) -> None:
 
     coefs_rounded = np.round_(coefs, 2)
@@ -91,45 +98,82 @@ def make_correlations_figure(
         )
     )
 
-    # Specify a diverging color map: red towards negative, white towards center, and
-    # green towards positive.
-    axes.imshow(coefs_rounded, plt.colormaps["RdYlGn"])
+    # Alternatively, specify a diverging color map such as "RdYlGn" (red towards
+    # negative, white towards center, and green towards positive), or
+    # "twilight_shifted".
+    res = axes.imshow(coefs_rounded, mpl.colormaps["pink"])  # type: ignore
+    font_size_labels = 50
+
+    # Add legend.
+    clb = plt.colorbar(res, shrink=0.5)
+    clb.ax.tick_params(labelsize=font_size_labels)
 
     # Set the X-axis and Y-axis tick locations and labels.
-    axes.set_xticks(np.arange(len(x_labels)), labels=x_labels)
-    axes.set_yticks(np.arange(len(y_labels)), labels=y_labels)
+    # axes.set_xticks(np.arange(len(x_labels)), labels=x_labels)
+    # axes.set_yticks(np.arange(len(y_labels)), labels=y_labels)
 
-    # Rotate the X-axis tick labels 90 degrees.
-    plt.setp(axes.get_xticklabels(), rotation=90, ha="right", rotation_mode="anchor")
+    # Instead, add a tick to separate the base features.
+    lang_code_x = x_labels[0][:2]
+    lang_code_y = y_labels[0][:2]
+    x_labels = [
+        f"{lang_code_x} {label}" for label in data.FEATURE_BASE_CODE_TO_NAMES.values()
+    ]
+    y_labels = [
+        f"{lang_code_y} {label}" for label in data.FEATURE_BASE_CODE_TO_NAMES.values()
+    ]
+
+    axes.set_xticks(np.arange(4, 100, 10), labels=x_labels, fontsize=font_size_labels)
+    axes.tick_params(axis="x", bottom=False)
+    axes.set_yticks(np.arange(4, 100, 10), labels=y_labels, fontsize=font_size_labels)
+    axes.tick_params(axis="y", bottom=False)
+
+    #
+    for i in range(10):
+        for j in range(10):
+            x1 = i * 10 - 0.5
+            y1 = j * 10 - 0.5
+            x2 = (i + 1) * 10
+            y2 = (j + 1) * 10
+            rec = plt.Rectangle(
+                (x1, y1),
+                x2,
+                y2,
+                fill=False,
+                color="black",
+                linewidth=2,
+            )
+            axes.add_patch(rec)
+
+    # Rotate the tick labels.
+    plt.setp(axes.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor")
+    plt.setp(axes.get_yticklabels(), rotation=45, ha="right", rotation_mode="anchor")
 
     # Add the coefficient values as text. Emphasize "significant" values with larger
     # text size and weight.
-    significant_threshold = 0.3
-    for i in range(len(y_labels)):
-        for j in range(len(x_labels)):
-            coef = coefs_rounded[i, j]
-            if abs(coef) >= significant_threshold:
-                font_size = 7
-                font_weight = "extra bold"
-            else:
-                font_size = 5
-                font_weight = "normal"
-            axes.text(
-                j,
-                i,
-                coef,
-                fontsize=font_size,
-                ha="center",
-                va="center",
-                color="black",
-                weight=font_weight,
-            )
-
-    # Set the axes title.
-    axes.set_title(fig_title, fontsize=32)
+    if include_coef_labels:
+        significant_threshold = 0.3
+        for i in range(len(y_labels)):
+            for j in range(len(x_labels)):
+                coef = coefs_rounded[i, j]
+                if abs(coef) >= significant_threshold:
+                    font_size = 7
+                    font_weight = "extra bold"
+                else:
+                    font_size = 5
+                    font_weight = "normal"
+                axes.text(
+                    j,
+                    i,
+                    coef,
+                    fontsize=font_size,
+                    ha="center",
+                    va="center",
+                    color="black",
+                    weight=font_weight,
+                )
 
     # Write the figure as an image to the output path.
-    fig.savefig(path_output)
+    fig.savefig(str(path_output))
     print(f"Output written to: {path_output}")
 
 
