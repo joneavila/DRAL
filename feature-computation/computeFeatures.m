@@ -22,12 +22,7 @@ function computeFeatures()
         '(''cppsCache'') in the same directories containing the audio ' ...
         'data. If the audio data has changed, delete these directories.'])
 
-    warning(['The function LOOKUPORCOMPUTEPITCHMODIFIED creates cache ' ...
-        'directories (''f0reaper'') in the same directories ' ...
-        'containing the audio data. If the audio data has changed, ' ...
-        'delete these directories.'])
-    
-    dirRelease = '/Users/jon/Documents/dissertation/DRAL-corpus/release/';
+    dirRelease = strcat(pwd, '/DRAL-corpus/release/');
 
     pathInputMetadata = strcat(dirRelease, 'fragments-short-matlab.csv');
 
