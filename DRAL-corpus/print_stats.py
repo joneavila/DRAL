@@ -9,7 +9,10 @@ import shared
 
 
 def main():
-    dir_dral_release = Path("/Users/jon/Documents/dissertation/DRAL-corpus/release")
+
+    dir_this_file = Path(__file__).parent.resolve()
+    dir_dral_release = dir_this_file.joinpath("/Volumes/shared/DRAL-releases/DRAL-7.0")
+
     conv_csv_path = dir_dral_release.joinpath("conversation.csv")
     participant_csv_path = dir_dral_release.joinpath("participant.csv")
     short_frags_csv_path = dir_dral_release.joinpath("fragments-short.csv")
@@ -42,6 +45,47 @@ def main():
 
     print_header('long fragments ("re-enactments")')
     print_fragments_long(df_frags_long)
+
+    # Print stats since 6.0 release. Excuse the dead code.
+    # date_str = "2023-03-24"
+    # conv_ids_after_date = df_conv[df_conv["recording_date"] >= date_str]["id"].tolist()
+    # conv_ids_after_date.remove("ES_080")
+    # conv_ids_after_date.remove("EN_080")
+    # df_frags_short_before_date = df_frags_short[
+    #     ~df_frags_short["conv_id"].isin(conv_ids_after_date)
+    # ]
+    # df_frags_short_after_date = df_frags_short[
+    #     df_frags_short["conv_id"].isin(conv_ids_after_date)
+    # ]
+    # print_header("other stats")
+    # print(
+    #     "unique participants, up to 6.0",
+    #     df_frags_short_before_date["participant_id_unique"].nunique(),
+    # )
+    #
+    # # Count the number of shared participants between the two sets of short fragments.
+    # unique_participants_before_date = df_frags_short_before_date[
+    #     "participant_id_unique"
+    # ].unique()
+    # unique_partcipants_after_date = df_frags_short_after_date[
+    #     "participant_id_unique"
+    # ].unique()
+    # unique_partcipants_after_date = set(unique_partcipants_after_date).difference(
+    #     unique_participants_before_date
+    # )
+    # print(
+    #     "unique participants, from 6.0 to 7.0",
+    #     len(unique_partcipants_after_date),
+    # )
+    #
+    # avg_before_date = len(df_frags_short_before_date) / len(
+    #     unique_participants_before_date
+    # )
+    # avg_after_date = len(df_frags_short_after_date) / len(unique_partcipants_after_date)
+    # print(avg_before_date, avg_after_date)
+    #
+    # print_header('long fragments ("re-enactments") from 6.0 to 7.0 release')
+    # print_fragments_long(df_frags_long)
 
 
 def print_header(header: str, decorator: str = "*") -> None:
