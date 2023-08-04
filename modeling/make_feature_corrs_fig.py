@@ -275,7 +275,7 @@ def make_correlations_figure(
                 )
 
     # Write the figure as an image to the output path.
-    fig.savefig(str(path_output))
+    fig.savefig(str(path_output), bbox_inches="tight")
     print(f"Output written to: {path_output}")
 
 
