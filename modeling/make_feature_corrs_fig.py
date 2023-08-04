@@ -10,10 +10,11 @@ from typing import Optional
 
 import data
 import matplotlib as mpl
-import matplotlib.patheffects as PathEffects
+import matplotlib.patheffects as patheffects
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from compute_feature_corrs import compute_feature_correlations
 
 
 def main() -> None:
@@ -32,7 +33,7 @@ def main() -> None:
     coefs = {
         "en-en": df_coefs_en_en,
         "en-es": df_coefs_en_es,
-        "es-en": df_coefs_es_en,
+        # "es-en": df_coefs_es_en,
         "es-es": df_coefs_es_es,
     }
 
@@ -111,49 +112,6 @@ def main() -> None:
         show_coeffs=True,
         show_coeffs_sign=True,
     )
-
-
-def compute_feature_correlations(
-    df_features_raw_en, df_features_raw_es
-) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-
-    df_features_en = data.standardize_features(df_features_raw_en)
-    df_features_es = data.standardize_features(df_features_raw_es)
-
-    # Append language code to column names.
-    df_features_en.rename(lambda col_name: "EN-" + col_name, axis=1, inplace=True)
-    df_features_es.rename(lambda col_name: "ES-" + col_name, axis=1, inplace=True)
-
-    # Get a matrix of Pearson product-moment correlation coefficients.
-    coefs = np.corrcoef(df_features_en, df_features_es, rowvar=False)
-
-    # The matrix contains the coefficients for all features, so separate these into
-    # language pairs.
-    n_en_features = df_features_en.shape[1]
-    n_es_features = df_features_es.shape[1]
-    assert n_en_features == n_es_features
-    n_features = n_en_features
-    coefs_en_en = coefs[0:n_features, 0:n_features]
-    coefs_en_es = coefs[0:n_features, n_features:]
-    coefs_es_en = coefs[n_features:, 0:n_features]
-    coefs_es_es = coefs[n_features:, n_features:]
-
-    # Read the coefficients into DataFrames, setting their index and column names to
-    # the feature names.
-    df_coefs_en_en = pd.DataFrame(
-        coefs_en_en, index=df_features_en.columns, columns=df_features_en.columns
-    )
-    df_coefs_en_es = pd.DataFrame(
-        coefs_en_es, index=df_features_en.columns, columns=df_features_es.columns
-    )
-    df_coefs_es_en = pd.DataFrame(
-        coefs_es_en, index=df_features_es.columns, columns=df_features_en.columns
-    )
-    df_coefs_es_es = pd.DataFrame(
-        coefs_es_es, index=df_features_es.columns, columns=df_features_es.columns
-    )
-
-    return df_coefs_en_en, df_coefs_en_es, df_coefs_es_en, df_coefs_es_es
 
 
 def make_correlations_figure(
@@ -278,11 +236,12 @@ def make_correlations_figure(
             for j in range(coefs_rounded.shape[1]):
                 coef = coefs_rounded[i, j]
 
+                if show_coeffs_sig_only and (abs(coef) < SIGNIFICANT_THRESHOLD):
+                    continue
+
                 if show_coeffs_sign:
                     coef = f"{coef:+.2f}"
 
-                if show_coeffs_sig_only and (abs(coef) < SIGNIFICANT_THRESHOLD):
-                    continue
                 # Add text for the coefficient.
                 text = axes.text(
                     j,
@@ -296,10 +255,10 @@ def make_correlations_figure(
                 )
                 text.set_path_effects(
                     [
-                        PathEffects.withStroke(
+                        patheffects.withStroke(
                             linewidth=FONT_SMALL_STROKE_WIDTH, foreground="white"
                         )
-                    ]
+                    ] # type: ignore
                 )
 
     # # Create the output directory.
