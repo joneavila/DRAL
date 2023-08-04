@@ -21,9 +21,6 @@ def main() -> None:
     # Disable interactive mode.
     plt.ioff()
 
-    # Create the output directory.
-    data.DIR_FEATURE_CORRS.mkdir(parents=True, exist_ok=True)
-
     df_features_raw_en, df_features_raw_es = data.read_features_en_es()
     (
         df_coefs_en_en,
@@ -40,12 +37,24 @@ def main() -> None:
     }
 
     for lang_pair, df_coefs in coefs.items():
+
         # Make a figure for analysis.
         make_correlations_figure(
             df_coefs,
             data.DIR_FEATURE_CORRS.joinpath(f"feature-corrs-{lang_pair}-analysis.png"),
             group_features_labels=False,
             show_coeffs=True,
+        )
+
+        # Make a second figure for analysis, with significant coefficients only.
+        make_correlations_figure(
+            df_coefs,
+            data.DIR_FEATURE_CORRS.joinpath(
+                f"feature-corrs-{lang_pair}-analysis-sig-only.png"
+            ),
+            group_features_labels=False,
+            show_coeffs=True,
+            show_coeffs_sig_only=True,
         )
 
         # Make a figure for print.
@@ -63,8 +72,7 @@ def main() -> None:
             show_coeffs=False,
         )
 
-    # Make another English and Spanish figure with the (absoluate) difference between
-    # using the full data and a subset.
+    # Compute the correlations of a subset of the data (DRAL 4.0).
     path_subset_4_0 = (
         Path(__file__).parent.resolve().joinpath("dral-4.0-short-frag-ids.csv")
     )
@@ -79,17 +87,29 @@ def main() -> None:
     ) = compute_feature_correlations(
         df_features_raw_en_subset, df_features_raw_es_subset
     )
-    # Get the absolute difference between the full and subset coefficients, to make a new DataFrame.
-    # df_coefs_en_es_diff is another DataFrame with the same index and columns.
-    df_coefs_en_es_diff = (df_coefs_en_es - df_coefs_en_es_subset).abs()
+    # Make an English and Spanish figure.
+    make_correlations_figure(
+        df_coefs_en_es_subset,
+        data.DIR_FEATURE_CORRS.joinpath(
+            "feature-corrs-en-es-analysis-sig-only-4.0.png"
+        ),
+        group_features_labels=False,
+        show_coeffs=True,
+        show_coeffs_sig_only=True,
+    )
+
+    # Make an English and Spanish figure with the difference between using the full data
+    # and a subset.
+    df_coefs_en_es_diff = df_coefs_en_es - df_coefs_en_es_subset
     make_correlations_figure(
         df_coefs_en_es_diff,
         data.DIR_FEATURE_CORRS.joinpath("feature-corrs-en-es-diff-with-4.0.png"),
-        color_map="Blues",
-        data_range_min=0.0,
-        data_range_max=0.3,
+        color_map="bwr",
+        data_range_min=-0.25,
+        data_range_max=0.25,
         group_features_labels=False,
         show_coeffs=True,
+        show_coeffs_sign=True,
     )
 
 
@@ -146,6 +166,7 @@ def make_correlations_figure(
     group_features_grid: bool = True,
     show_coeffs: bool = False,
     show_coeffs_sig_only: bool = False,
+    show_coeffs_sign: bool = False,
 ) -> None:
 
     # Convert the values of df_coefs into a numpy array, round.
@@ -167,14 +188,19 @@ def make_correlations_figure(
         )
     )
 
+    SIGNIFICANT_THRESHOLD = 0.3
+
+    if show_coeffs_sig_only:
+        # Set all non-significant coefficients to 0.
+        coefs_rounded = np.where(
+            np.abs(coefs_rounded) < SIGNIFICANT_THRESHOLD, 0, coefs_rounded
+        )
+
     res = axes.imshow(coefs_rounded, mpl.colormaps[color_map], vmin=data_range_min, vmax=data_range_max)  # type: ignore
 
     FONT_LARGE_SIZE = 128
     FONT_SMALL_SIZE = 16
     FONT_SMALL_STROKE_WIDTH = 4
-    # Set the global font to a custom font.
-    # plt.rcParams["font.family"] = "sans-serif"
-    # plt.rcParams["font.sans-serif"] = "Atkinson Hyperlegible"
 
     # Add legend.
     clb = plt.colorbar(res, shrink=0.5)
@@ -248,12 +274,14 @@ def make_correlations_figure(
                 axes.add_patch(rec)
 
     if show_coeffs:
-        significant_threshold = 0.3
         for i in range(coefs_rounded.shape[0]):
             for j in range(coefs_rounded.shape[1]):
                 coef = coefs_rounded[i, j]
 
-                if show_coeffs_sig_only and (abs(coef) < significant_threshold):
+                if show_coeffs_sign:
+                    coef = f"{coef:+.2f}"
+
+                if show_coeffs_sig_only and (abs(coef) < SIGNIFICANT_THRESHOLD):
                     continue
                 # Add text for the coefficient.
                 text = axes.text(
@@ -273,6 +301,9 @@ def make_correlations_figure(
                         )
                     ]
                 )
+
+    # # Create the output directory.
+    # path_output.mkdir(parents=True, exist_ok=True)
 
     # Write the figure as an image to the output path.
     fig.savefig(str(path_output), bbox_inches="tight")
