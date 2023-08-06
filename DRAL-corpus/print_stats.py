@@ -11,7 +11,7 @@ import shared
 def main():
 
     dir_this_file = Path(__file__).parent.resolve()
-    dir_dral_release = dir_this_file.joinpath("release/")
+    dir_dral_release = dir_this_file.joinpath("release")
     # TODO Read default DRAL release path from data.py.
 
     conv_csv_path = dir_dral_release.joinpath("conversation.csv")
