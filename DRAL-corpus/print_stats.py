@@ -1,8 +1,8 @@
 # [!] This scripts reads data created by make_DRAL_release.py. Run make_DRAL_release.py
 # before running this script.
 
-import re
 from pathlib import Path
+from typing import TextIO
 
 import pandas as pd
 import shared
@@ -11,7 +11,8 @@ import shared
 def main():
 
     dir_this_file = Path(__file__).parent.resolve()
-    dir_dral_release = dir_this_file.joinpath("/Volumes/shared/DRAL-releases/DRAL-7.0")
+    dir_dral_release = dir_this_file.joinpath("release/")
+    # TODO Read default DRAL release path from data.py.
 
     conv_csv_path = dir_dral_release.joinpath("conversation.csv")
     participant_csv_path = dir_dral_release.joinpath("participant.csv")
@@ -34,17 +35,24 @@ def main():
     df_frags_long["time_end"] = pd.to_timedelta(df_frags_long["time_end"])
     df_frags_long["duration"] = pd.to_timedelta(df_frags_long["duration"])
 
-    print_header("conversations")
-    print_conversations(df_conv)
+    path_output = dir_dral_release.joinpath("stats.txt")
+    with open(path_output, "w") as file_output:
+        print_header("conversations", file_output)
+        print_conversations(df_conv, file_output)
 
-    print_header("participants")
-    print_participants(df_participant)
+        print_header("participants", file_output)
+        print_participants(df_participant, file_output)
 
-    print_header('short fragments ("phrases")')
-    print_fragments_short(df_frags_short)
+        print_header('short fragments ("phrases")', file_output)
+        print_fragments_short(df_frags_short, file_output)
 
-    print_header('long fragments ("re-enactments")')
-    print_fragments_long(df_frags_long)
+        print_header('short fragments ("phrases") EN-ES only', file_output)
+        print_fragments_short(df_frags_short, file_output, en_es_only=True)
+
+        print_header('long fragments ("re-enactments")', file_output)
+        print_fragments_long(df_frags_long, file_output)
+
+    print(f"Wrote output to: {path_output}")
 
     # Print stats since 6.0 release. Excuse the dead code.
     # date_str = "2023-03-24"
@@ -88,119 +96,132 @@ def main():
     # print_fragments_long(df_frags_long)
 
 
-def print_header(header: str, decorator: str = "*") -> None:
+def print_header(header: str, file_output: TextIO, decorator: str = "*") -> None:
     # Print a string surrounded by a decorator.
     decorator_len = 10
-    print(decorator * decorator_len, header, decorator * decorator_len)
+    file_output.write(
+        f"{decorator * decorator_len} {header} {decorator * decorator_len}\n"
+    )
 
 
-def print_conversations(df_conv: pd.DataFrame) -> None:
+def print_conversations(df_conv: pd.DataFrame, file_output: TextIO) -> None:
     # Print number of original conversations.
     n_og_conversations = df_conv[
         df_conv["original_or_reenacted"] == shared.CONV_CODE_ORIGINAL
     ].shape[0]
-    print(f"count (original) = {n_og_conversations}")
+    file_output.write(f"count (original) = {n_og_conversations}\n")
 
     # Print number of re-enacted conversations.
     n_re_conversations = df_conv[
         df_conv["original_or_reenacted"] == shared.CONV_CODE_REENACTED
     ].shape[0]
-    print(f"count (re-enacted) = {n_re_conversations}")
+    file_output.write(f"count (re-enacted) = {n_re_conversations}\n")
 
 
-def print_participants(df_participant: pd.DataFrame) -> None:
+def print_participants(df_participant: pd.DataFrame, file_output: TextIO) -> None:
 
     # Print number of unique participants.
     n_unique_participant_ids = df_participant["id_unique"].nunique()
-    print(f"count (unique) = {n_unique_participant_ids}")
+    file_output.write(f"count (unique) = {n_unique_participant_ids}\n")
 
 
-def print_fragments_short(df_frags_short: pd.DataFrame) -> None:
+def print_fragments_short(
+    df_frags_short: pd.DataFrame, file_output: TextIO, en_es_only: bool = False
+) -> None:
+
+    # Drop fragments that are not from EN-ES pairs. (DRAL 7.0 does not include any
+    # short fragments pairs other than EN-ES, so this isn't very useful.)
+    if en_es_only:
+        is_en_frag = df_frags_short["id"].str.startswith("EN")
+        frag_ids_en = df_frags_short["id"][is_en_frag].tolist()
+        candidate_frag_ids_es = [frag_id.replace("EN", "ES") for frag_id in frag_ids_en]
+        is_es_frag = df_frags_short["id"].isin(candidate_frag_ids_es)
+        df_frags_short = df_frags_short[is_en_frag | is_es_frag]
 
     # Print number of original or re-enacted short fragments.
     n_frags = df_frags_short.shape[0]
-    print(f"count (original or re-enacted) = {n_frags}")
+    file_output.write(f"count (original or re-enacted) = {n_frags}\n")
 
     # Print number of original or re-enacted short fragments by language.
     for lang_code in shared.LANG_CODES:
-        id_pattern = re.compile(rf"^{lang_code}.*")
-        df_frags_in_lang = df_frags_short["id"].str.fullmatch(id_pattern)
-        n_in_lang = df_frags_in_lang.values.sum()
-        print(f"\t{lang_code} count = {n_in_lang}")
+        id_pattern = rf"^{lang_code}.*"
+        series_frags_in_lang = df_frags_short["id"].str.fullmatch(id_pattern)
+        n_in_lang = series_frags_in_lang.sum()
+        file_output.write(f"\t{lang_code} count = {n_in_lang}\n")
 
     # Print number of original short fragments.
     n_frags_original = df_frags_short[
         df_frags_short["original_or_reenacted"] == "OG"
     ].shape[0]
-    print(f"count (original) = {n_frags_original}")
+    file_output.write(f"count (original) = {n_frags_original}\n")
 
     # Print number of re-enacted short fragments.
     n_frags_reenacted = df_frags_short[
         df_frags_short["original_or_reenacted"] == "RE"
     ].shape[0]
-    print(f"count (re-enacted) = {n_frags_reenacted}")
+    file_output.write(f"count (re-enacted) = {n_frags_reenacted}\n")
 
-    print("duration")
+    file_output.write("duration\n")
 
     # Print total duration of short fragments.
     duration_total = df_frags_short["duration"].sum()
-    print(f"\ttotal = {duration_total}")
+    file_output.write(f"\ttotal = {duration_total}\n")
 
     # Print mean duration of short fragments.
     duration_mean = df_frags_short["duration"].mean()
-    print(f"\tmean = {duration_mean}")
+    file_output.write(f"\tmean = {duration_mean}\n")
 
     # Print minimum duration of short fragments.
     duration_min = df_frags_short["duration"].min()
-    print(f"\tminimum = {duration_min}")
+    file_output.write(f"\tminimum = {duration_min}\n")
 
     # Print maximum duration of short fragments.
     duration_max = df_frags_short["duration"].max()
-    print(f"\tmaximum = {duration_max}")
+    file_output.write(f"\tmaximum = {duration_max}\n")
 
 
-def print_fragments_long(df_long_frags: pd.DataFrame) -> None:
+def print_fragments_long(df_long_frags: pd.DataFrame, file_output: TextIO) -> None:
 
     # Print number of original or re-enacted long fragments.
     n_frags = df_long_frags.shape[0]
-    print(f"count (original or re-enacted) =  {n_frags}")
+    file_output.write(f"count (original or re-enacted) =  {n_frags}\n")
 
     # Print number of original or re-enacted long fragments by language.
     for lang_code in shared.LANG_CODES:
-        id_pattern = re.compile(rf"^{lang_code}.*")
+        id_pattern = rf"^{lang_code}.*"
         df_frags_in_lang = df_long_frags["id"].str.fullmatch(id_pattern)
-        n_in_lang = df_frags_in_lang.values.sum()
-        print(f"\t{lang_code} count = {n_in_lang}")
+        n_in_lang = df_frags_in_lang.sum()
+        file_output.write(f"\t{lang_code} count = {n_in_lang}\n")
 
     # Print number of original long fragments.
     n_frags_original = df_long_frags[
         df_long_frags["original_or_reenacted"] == "OG"
     ].shape[0]
-    print(f"count (original) = {n_frags_original}")
+    file_output.write(f"count (original) = {n_frags_original}\n")
 
     # Print number of re-enacted long fragments.
     n_frags_reenacted = df_long_frags[
         df_long_frags["original_or_reenacted"] == "RE"
     ].shape[0]
-    print(f"count (re-enacted) = {n_frags_reenacted}")
+    file_output.write(f"count (re-enacted) = {n_frags_reenacted}\n")
 
-    print("duration")
+    file_output.write("duration\n")
 
     # Print total duration of long fragments.
     duration_total = df_long_frags["duration"].sum()
-    print(f"\ttotal = {duration_total}")
+    file_output.write(f"\ttotal = {duration_total}\n")
 
     # Print mean duration of long fragments.
     duration_mean = df_long_frags["duration"].mean()
-    print(f"\tmean = {duration_mean}")
+    file_output.write(f"\tmean = {duration_mean}\n")
 
     # Print minimum duration of long fragments.
     duration_min = df_long_frags["duration"].min()
-    print(f"\tminimum = {duration_min}")
+    file_output.write(f"\tminimum = {duration_min}\n")
 
     # Print maximum duration of long fragments.
     duration_max = df_long_frags["duration"].max()
-    print(f"\tmaximum = {duration_max}")
+    file_output.write(f"\tmaximum = {duration_max}\n")
 
 
 if __name__ == "__main__":
