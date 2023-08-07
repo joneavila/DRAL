@@ -1,18 +1,20 @@
-# Convert a DRAL release to the LDC format.
+# Convert DRAL 7.0 to comply with LDC guidelines.
 #
 # - Create a root directory `Dialogs Re-enacted Across Languages`
-# - Create a subdirectory `data/speech` to store fragment audios and metadata
-# - Create a subdirectory `docs` to manually store documentation data later
+# - Create a subdirectory `data/speech` to copy fragment audio files
+# - Create a subdirectory `metadata` to copy metadata files
+# - Create a subdirectory `docs` to manually store documentation files
 #
-# - Modify short fragment IDs to include `S` after the conversation ID
-# - Modify long fragment IDs to include `L` after the conversation ID, and remove `#`
-#   to avoid punctuation in filenames
+# - Update fragment IDs in metadata and audio filenames
+#   - Update short fragment IDs to include `S` after the conversation ID, e.g. from
+#       `EN_001_1` to `EN_001_S_1`
+#   - Update long fragment IDs to include `L` after the conversation ID and remove the
+#       `#` before the annotation value, e.g. from `EN_001_#1` to `EN_001_L_1`
 #
 # - Exclude long fragment pairs that are not English-Spanish
 # - Exclude conversation audios
 #
 # - Convert all audios to 16 kHz, 16-bit, FLAC
-# - Convert all metadata CSV files to XML
 #
 # See:
 # - LDC Technical Guidelines: https://www.ldc.upenn.edu/data-management/providing-data/technical-guidelines
@@ -26,106 +28,139 @@ import sox
 
 
 def main():
-    def convert_audio_frag_short(frag_id):
-        path_audio_wav = dir_release.joinpath(f"fragments-short/{frag_id}.wav")
-        frag_id_ldc = insert_code_into_id(frag_id, code="S")
-        path_audio_flac = dir_output_audio_frags_short.joinpath(f"{frag_id_ldc}.flac")
-        tfm.build(str(path_audio_wav), str(path_audio_flac))
 
-    def convert_audio_frag_long(frag_id):
-        path_audio_wav = dir_release.joinpath(f"fragments-long/{frag_id}.wav")
-        frag_id_ldc = insert_code_into_id(frag_id, code="L")
-        frag_id_ldc = remove_pound_from_id(frag_id_ldc)
-        path_audio_flac = dir_output_audio_frags_long.joinpath(f"{frag_id_ldc}.flac")
-        tfm.build(str(path_audio_wav), str(path_audio_flac))
-
-    # TODO Read paths from command line arguments.
     # Input paths.
     dir_this = Path(__file__).parent
-    dir_release = dir_this.joinpath("release")
-    path_input_frags_short = dir_release.joinpath("fragments-short.csv")
-    path_input_frags_long = dir_release.joinpath("fragments-long.csv")
-    path_input_conversation = dir_release.joinpath("conversation.csv")
-    path_input_participant = dir_release.joinpath("participant.csv")
-    path_input_producer = dir_release.joinpath("producer.csv")
+    # Input paths: DRAL 7.0.
+    dir_release = Path(__file__).parent.joinpath("release")
+    path_frag_short = dir_release.joinpath("fragments-short.csv")
+    path_frag_long = dir_release.joinpath("fragments-long.csv")
+    path_conversation = dir_release.joinpath("conversation.csv")
+    path_participant = dir_release.joinpath("participant.csv")
+    path_producer = dir_release.joinpath("producer.csv")
+    dir_frag_short_audio = dir_release.joinpath("fragments-short")
+    dir_frag_long_audio = dir_release.joinpath("fragments-long")
 
     # Output paths.
-    # Name the root directory the same as the corpus.
-    # Create the `speech` subdirectory, to store the audios and metadata.
-    dir_output = dir_this.joinpath("release-ldc")
-    dir_output_root = dir_output.joinpath("Dialogs Re-enacted Across Languages")
-    dir_output_speech_data = dir_output_root.joinpath("data/speech")
-    path_output_frags_short = dir_output_speech_data.joinpath("fragments-short.xml")
-    path_output_frags_long = dir_output_speech_data.joinpath("fragments-long.xml")
-    path_output_conversation = dir_output_speech_data.joinpath("conversation.xml")
-    path_output_participant = dir_output_speech_data.joinpath("participant.xml")
-    path_output_producer = dir_output_speech_data.joinpath("producer.xml")
-    dir_output_audio_frags_short = dir_output_speech_data.joinpath("fragments-short")
-    dir_output_audio_frags_long = dir_output_speech_data.joinpath("fragments-long")
-    dir_output_docs_data = dir_output_root.joinpath("docs")
-    make_dirs_in_path(dir_output_audio_frags_short)
-    make_dirs_in_path(dir_output_audio_frags_long)
-    make_dirs_in_path(dir_output_docs_data)
+    # Create a root directory in the output directory with the same name as the corpus
+    # and its subdirectories.
+    dir_out = dir_this.joinpath("release-ldc")
+    dir_root_out = dir_out.joinpath("Dialogs Re-enacted Across Languages")
+    dir_speech_data_out = dir_root_out.joinpath("data/speech")
+    dir_metadata_out = dir_speech_data_out.joinpath("metadata")
+    path_frag_short_out = dir_metadata_out.joinpath("fragments-short.csv")
+    path_frag_long_out = dir_metadata_out.joinpath("fragments-long.csv")
+    path_conversation_out = dir_metadata_out.joinpath("conversation.csv")
+    path_participant_out = dir_metadata_out.joinpath("participant.csv")
+    path_producer_out = dir_metadata_out.joinpath("producer.csv")
+    dir_frag_short_audio_out = dir_speech_data_out.joinpath("fragments-short")
+    dir_frag_long_audio_out = dir_speech_data_out.joinpath("fragments-long")
+    dir_docs_data_out = dir_root_out.joinpath("docs")
+    make_dirs_in_path(dir_metadata_out)
+    make_dirs_in_path(dir_frag_short_audio_out)
+    make_dirs_in_path(dir_frag_long_audio_out)
+    make_dirs_in_path(dir_docs_data_out)
 
-    # Configure SoX to convert audios to 16 kHz, 16-bit, FLAC.
-    tfm = sox.Transformer()
-    tfm.convert(samplerate=16000, bitdepth=16)
+    print("Reading metadata...")
+    df_frag_short = pd.read_csv(path_frag_short)
+    df_frag_long = pd.read_csv(path_frag_long)
+    df_conversation = pd.read_csv(path_conversation)
+    df_participant = pd.read_csv(path_participant)
+    df_producer = pd.read_csv(path_producer)
 
-    # Read the metadata into DataFrames.
-    df_frags_short = pd.read_csv(path_input_frags_short)
-    df_frags_long = pd.read_csv(path_input_frags_long)
-    df_conversation = pd.read_csv(path_input_conversation)
-    df_participant = pd.read_csv(path_input_participant)
-    df_producer = pd.read_csv(path_input_producer)
+    print("Adding paritions metadata...")
+    df_frag_short = add_partition_metadata(df_frag_short)
+    df_frag_long = add_partition_metadata(df_frag_long)
 
     # DRAL 7.0 short fragment pairs are all English-Spanish, but long fragment pairs may
     # be in other language pairs. Drop the fragments that are not part of an
     # English-Spanish pair.
-    frag_ids_bad_lang = df_frags_long[
-        (df_frags_long["lang_code"] != "EN") & (df_frags_long["lang_code"] != "ES")
+    print("Dropping non-English-Spanish fragment pairs...")
+    frag_ids_bad = df_frag_long[
+        (df_frag_long["lang_code"] != "EN") & (df_frag_long["lang_code"] != "ES")
     ].index
-    frag_ids_bad_lang_trans = df_frags_long.iloc[frag_ids_bad_lang]["trans_id"].index
-    frag_ids_to_drop = frag_ids_bad_lang.union(frag_ids_bad_lang_trans)
-    df_frags_long.drop(frag_ids_to_drop, inplace=True)
+    frag_ids_bad_trans = df_frag_long.iloc[frag_ids_bad]["trans_id"].index
+    frag_ids_to_drop = frag_ids_bad.union(frag_ids_bad_trans)
+    df_frag_long.drop(frag_ids_to_drop, inplace=True)
 
-    # Write fragment audios to FLAC.
-    df_frags_short["id"].apply(convert_audio_frag_short)
-    df_frags_long["id"].apply(convert_audio_frag_long)
+    # Copy the "id" column to a temporary column "id_old".
+    df_frag_short["id_old"] = df_frag_short["id"]
+    df_frag_long["id_old"] = df_frag_long["id"]
 
-    # Insert "S" into short fragment IDs and their translation fragment IDs.
-    df_frags_short["id"] = df_frags_short["id"].apply(insert_code_into_id, code="S")
-    df_frags_short["trans_id"] = df_frags_short["trans_id"].apply(
-        insert_code_into_id, code="S"
+    # Insert "S" into short fragment IDs, "L" into long fragment IDs, and delete any "#".
+    print("Updating fragment IDs...")
+    df_frag_short["id"] = df_frag_short["id"].apply(update_frag_id, to_insert="S")
+    df_frag_short["trans_id"] = df_frag_short["trans_id"].apply(
+        update_frag_id, to_insert="S"
     )
-    # Insert "L" into long fragment IDs and their translation fragment IDs. Remove "#".
-    df_frags_long["id"] = df_frags_long["id"].apply(insert_code_into_id, code="L")
-    df_frags_long["trans_id"] = df_frags_long["trans_id"].apply(
-        insert_code_into_id, code="L"
+    df_frag_long["id"] = df_frag_long["id"].apply(update_frag_id, to_insert="L")
+    df_frag_long["trans_id"] = df_frag_long["trans_id"].apply(
+        update_frag_id, to_insert="L"
     )
-    df_frags_long["id"] = df_frags_long["id"].apply(remove_pound_from_id)
-    df_frags_long["trans_id"] = df_frags_long["trans_id"].apply(remove_pound_from_id)
 
-    # Write metadata to XML.
-    def dataframe_to_xml(df: pd.DataFrame, path_output: Path):
-        df.to_xml(path_output, index=False, parser="etree")
+    # Convert fragment audios to 16 kHz, 16-bit, FLAC.
+    print("Converting fragment audios...")
+    tfm = sox.Transformer()
+    tfm.convert(samplerate=16000, bitdepth=16)
 
-    dataframe_to_xml(df_frags_short, path_output_frags_short)
-    dataframe_to_xml(df_frags_long, path_output_frags_long)
-    dataframe_to_xml(df_conversation, path_output_conversation)
-    dataframe_to_xml(df_participant, path_output_participant)
-    dataframe_to_xml(df_producer, path_output_producer)
+    for _, row in df_frag_short.iterrows():
+        path_audio_in = dir_frag_short_audio.joinpath(row["id_old"] + ".wav")
+        path_audio_out = dir_frag_short_audio_out.joinpath(row["id"] + ".flac")
+        tfm.build(str(path_audio_in), str(path_audio_out))
+
+    for _, row in df_frag_long.iterrows():
+        path_audio_in = dir_frag_long_audio.joinpath(row["id_old"] + ".wav")
+        path_audio_out = dir_frag_long_audio_out.joinpath(row["id"] + ".flac")
+        tfm.build(str(path_audio_in), str(path_audio_out))
+
+    # Drop the "id_old" columns.
+    df_frag_short.drop("id_old", axis=1, inplace=True)
+    df_frag_long.drop("id_old", axis=1, inplace=True)
+
+    # Write metadata to CSV files.
+    print("Writing metadata...")
+    df_frag_short.to_csv(path_frag_short_out, index=False)
+    df_frag_long.to_csv(path_frag_long_out, index=False)
+    df_conversation.to_csv(path_conversation_out, index=False)
+    df_participant.to_csv(path_participant_out, index=False)
+    df_producer.to_csv(path_producer_out, index=False)
+
+    print("Done")
 
 
-def insert_code_into_id(frag_id: str, code: str):
+def add_partition_metadata(df_frag_in: pd.DataFrame) -> pd.DataFrame:
+    # Add a column "set" with value "training" or "test". For DRAL 7.0, the training set
+    # contains conversations 1-104 and the test set contains conversations 105-136.
+    df_frag = df_frag_in.copy()
+
+    conv_nums_training = range(1, 105)  # 1-104
+    conv_nums_test = range(105, 137)  # 105-136
+
+    def determine_set(frag_id: str) -> str:
+
+        # The conversation number is the second element in the fragment ID, separated
+        # by an underscore, e.g., "EN_001_3" is sourced from conversation 1.
+        conv_num = int(frag_id.split("_")[1])
+        if conv_num in conv_nums_training:
+            return "training"
+        elif conv_num in conv_nums_test:
+            return "test"
+        else:
+            raise ValueError(f"Conversation number {conv_num} not in training or test.")
+
+    df_frag["set"] = df_frag["id"].apply(determine_set)
+
+    return df_frag
+
+
+def update_frag_id(frag_id: str, to_insert: str):
+    # Remove all pound characters from a fragment ID (used in long fragment IDs).
+    frag_id_new = frag_id.replace("#", "")
     # Insert a string into a fragment ID, following the two-letter language code,
     # underscore, three-digit conversation ID, and second underscore.
     insert_idx = 7
-    return f"{frag_id[:insert_idx]}{code}_{frag_id[insert_idx:]}"
-
-
-def remove_pound_from_id(frag_id):
-    # Remove all pound characters from a fragment ID (used in long fragment IDs).
-    return frag_id.replace("#", "")
+    frag_id_new = f"{frag_id_new[:insert_idx]}{to_insert}_{frag_id_new[insert_idx:]}"
+    return frag_id_new
 
 
 def make_dirs_in_path(path: Path):
