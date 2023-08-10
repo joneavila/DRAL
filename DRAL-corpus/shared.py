@@ -1,10 +1,13 @@
 # Mostly constants shared across Python scripts.
 
+from typing import Optional
+
+
 class MarkupTier:
     tiers_dict = {}
 
     def __init__(
-        self, name: str, track_side_code: str = None, remix_dict: dict = None
+        self, name: str, track_side_code: Optional[str] = None, remix_dict: Optional[dict] = None
     ) -> None:
         # `name` is the name of the tier entered in ELAN.
         # `track_side_code` is a letter indicating which audio track the tier belongs
