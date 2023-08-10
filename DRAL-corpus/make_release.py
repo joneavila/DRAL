@@ -266,7 +266,6 @@ def main() -> None:
     # is excluded from public releases, used for my dissertation project.
     df_markup_long.to_csv(
         dir_output_root.joinpath("fragments-long-complete.csv"),
-        index=False,
     )
 
     print(f"Done. Output written to: {dir_output_root}")
