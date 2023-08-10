@@ -6,6 +6,10 @@ See the workflow diagram at the bottom of this page.
 
 A DRAL release is made from conversation audios and their markup and metadata. See the documentation in `make_release.py` for more details, as well as its help message: `make_release.py --help`
 
+Optional: Run `print_stats.py`.
+
+For DRAL 8.0: Run `add_partition_metadata_release_8.py`
+
 Archive the output for sharing. For example:
 
 ```zsh
@@ -54,6 +58,12 @@ There has only been one request for redacting audio, so I haven't automated this
   - Listen to a few annotated segments and verify they are intact
   - Save the file and close
 
+## Create LDC release from DRAL 8.0 release
+
+Run `make_release_ldc.py`
+
+Optional: Run `validate-audio-files-ldc-release.sh`
+
 ## Print corpus statistics
 
 Print corpus statistics -- such as the number of conversations, and utterances, their duration, and the number of participants -- with `print_stats.py`.
@@ -99,7 +109,6 @@ duration
  minimum = 0 days 00:00:00.750000
  maximum = 0 days 00:00:22.783000
 ```
-
 
 ## Transcribe utterances
 
