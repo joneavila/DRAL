@@ -1,4 +1,5 @@
-# These script is specific to DRAL 7.0.
+# These script is specific to DRAL 8.0 (DRAL 7.0 plus the previously held out test set
+# and other small changes, see change log).
 
 from pathlib import Path
 
@@ -21,6 +22,7 @@ def main():
     path_frag_long_sets_out = dir_release.joinpath("fragments-long-sets.csv")
 
     # Shared with others.
+    # Do not read any column as an index.
     df_frag_short = pd.read_csv(path_frag_short)
     df_frag_long = pd.read_csv(path_frag_long)
     df_sets_short = create_partitions_metadata(df_frag_short)
@@ -39,7 +41,7 @@ def main():
 
 def determine_set(frag_id: str) -> str:
 
-    # For DRAL 7.0, the training set contains conversations 1-104 and the test set
+    # For DRAL 8.0, the training set contains conversations 1-104 and the test set
     # contains conversations 105-136.
     CONV_NUMS_TRAINING = range(1, 105)  # 1-104
     CONV_NUMS_TEST = range(105, 137)  # 105-136

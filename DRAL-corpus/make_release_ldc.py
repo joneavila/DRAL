@@ -1,4 +1,4 @@
-# Convert DRAL 7.0 to comply with LDC guidelines.
+# Convert DRAL 8.0 to comply with LDC guidelines.
 #
 # - Create a root directory `Dialogs Re-enacted Across Languages`
 # - Create a subdirectory `data/speech` to copy fragment audio files
@@ -31,7 +31,7 @@ def main():
 
     # Input paths.
     dir_this = Path(__file__).parent
-    # Input paths: DRAL 7.0.
+    # Input paths: DRAL 8.0.
     dir_release = Path(__file__).parent.joinpath("release")
     path_frag_short = dir_release.joinpath("fragments-short.csv")
     path_frag_long = dir_release.joinpath("fragments-long.csv")
@@ -72,7 +72,7 @@ def main():
     df_frag_short = add_partition_metadata(df_frag_short)
     df_frag_long = add_partition_metadata(df_frag_long)
 
-    # DRAL 7.0 short fragment pairs are all English-Spanish, but long fragment pairs may
+    # DRAL 8.0 short fragment pairs are all English-Spanish, but long fragment pairs may
     # be in other language pairs. Drop the fragments that are not part of an
     # English-Spanish pair.
     print("Dropping non-English-Spanish fragment pairs...")
@@ -129,7 +129,7 @@ def main():
 
 
 def add_partition_metadata(df_frag_in: pd.DataFrame) -> pd.DataFrame:
-    # Add a column "set" with value "training" or "test". For DRAL 7.0, the training set
+    # Add a column "set" with value "training" or "test". For DRAL 8.0, the training set
     # contains conversations 1-104 and the test set contains conversations 105-136.
     df_frag = df_frag_in.copy()
 

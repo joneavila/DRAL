@@ -1,3 +1,6 @@
+# This script should be moved to the modeling directory (TODO). To partition DRAL
+# into training and test sets for 8.0 release, see add_partition_metadata_release_8.py.
+
 import argparse
 import random
 from pathlib import Path

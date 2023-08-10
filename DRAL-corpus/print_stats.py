@@ -103,7 +103,7 @@ def print_fragments_short(
     df_frag_short: pd.DataFrame, file_output: TextIO, en_es_only: bool = False
 ) -> None:
 
-    # Optionally exclude fragments that are not from EN-ES pairs. (DRAL 7.0 does not
+    # Optionally exclude fragments that are not from EN-ES pairs. (DRAL 8.0 does not
     # include any short fragments pairs other than EN-ES, so this isn't very useful.)
     if en_es_only:
         df_frag_short = drop_non_en_es(df_frag_short)
