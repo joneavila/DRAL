@@ -165,10 +165,11 @@ def main() -> None:
             is_silent,
             df_markup_short["audio_path"],
             total=len(df_markup_short),
+            chunksize=1,
         )
         if any(is_silent_frag):
             print("These fragments may be silent:")
-            print(df_markup_short[is_silent_frag].index)
+            print(df_markup_short[is_silent_frag].index.tolist())
 
     print("Writing long fragment audios...")
     process_map(
