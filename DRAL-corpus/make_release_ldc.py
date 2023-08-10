@@ -75,13 +75,17 @@ def main():
     # DRAL 8.0 short fragment pairs are all English-Spanish, but long fragment pairs may
     # be in other language pairs. Drop the fragments that are not part of an
     # English-Spanish pair.
+    #
+    # Duplicate code in print_stats.py.
     print("Dropping non-English-Spanish fragment pairs...")
-    frag_ids_bad = df_frag_long[
-        (df_frag_long["lang_code"] != "EN") & (df_frag_long["lang_code"] != "ES")
-    ].index
-    frag_ids_bad_trans = df_frag_long.iloc[frag_ids_bad]["trans_id"].index
-    frag_ids_to_drop = frag_ids_bad.union(frag_ids_bad_trans)
-    df_frag_long.drop(frag_ids_to_drop, inplace=True)
+    is_en_with_es_pair = (df_frag_long["lang_code"] == "EN") & (
+        df_frag_long["trans_id"].str.startswith("ES")
+    )
+    is_es_with_en_pair = (df_frag_long["lang_code"] == "ES") & (
+        df_frag_long["trans_id"].str.startswith("EN")
+    )
+    is_part_of_pair = is_en_with_es_pair | is_es_with_en_pair
+    df_frag_long = df_frag_long[is_part_of_pair]
 
     # Copy the "id" column to a temporary column "id_old".
     df_frag_short["id_old"] = df_frag_short["id"]
@@ -99,7 +103,8 @@ def main():
     )
 
     # Convert fragment audios to 16 kHz, 16-bit, FLAC.
-    print("Converting fragment audios...")
+    print("Converting fragment audios. This will take a while...")
+    # TODO Parallelize and add progress bar with tqdm.
     tfm = sox.Transformer()
     tfm.convert(samplerate=16000, bitdepth=16)
 
