@@ -88,6 +88,9 @@ def main() -> None:
         )
         return
 
+    # Set pandas options to display all rows when printing DataFrames, for debugging.
+    pd.set_option('display.max_rows', None)
+
     # Check for broken audios with SoX, to avoid SoX errors downstream.
     print("Validating WAV files...")
     path_wav_list = list(dir_input_recordings.glob("*.wav"))
