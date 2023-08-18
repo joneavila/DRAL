@@ -26,6 +26,12 @@ Compare files in a new release to a previous release with `diff`. To copy only n
 for a new release, copy the files of the new release into the previous release, select
 "skip" for duplicate files, then in the previous release sort by Date Created.
 
+### Split large archive into smaller files
+
+```zsh
+tar cvzf - <input-release-dir> | split -b 5000m - <output-archive>.tgz.
+```
+
 ### Specific to DRAL 8.0
 
 For DRAL 8.0, run `add_partition_metadata_release_8.py`
