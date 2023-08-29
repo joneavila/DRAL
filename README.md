@@ -38,14 +38,37 @@ The code is separated into the following subdirectories. Each subdirectory conta
 
 ## Citing
 
-<!--
+
 ### Interspeech 2023 paper
 
-> TODO
--->
+Cite as: Avila, J.E., Ward, N.G. (2023) Towards Cross-Language Prosody Transfer for Dialog. Proc. INTERSPEECH 2023, 2143-2147, doi: 10.21437/Interspeech.2023-1152
+
+```tex
+@inproceedings{avila23_interspeech,
+  author={Jonathan E. Avila and Nigel G. Ward},
+  title={{Towards Cross-Language Prosody Transfer for Dialog}},
+  year=2023,
+  booktitle={Proc. INTERSPEECH 2023},
+  pages={2143--2147},
+  doi={10.21437/Interspeech.2023-1152}
+}
+```
+
+Online: [ISCA Archive](https://www.isca-speech.org/archive/interspeech_2023/index.html)
+
 ### DRAL technical report
 
-> Nigel G. Ward, Jonathan E. Avila, and Emilia Rivas. 2022. Dialogs Re-enacted Across Languages. University of Texas at El Paso. Retrieved from <https://www.cs.utep.edu/nigel/papers/dral-techreport.pdf>
+```tex
+@techreport{ward2023a,
+  title = {Dialogs {{Re-enacted Across Languages}}, {{Version}} 2},
+  author = {Ward, Nigel G. and Avila, Jonathan E. and Rivas, Emilia and Marco, Divette},
+  year = {2023},
+  number = {UTEP-CS-23-27},
+  institution = {{University of Texas at El Paso}}
+}
+```
+
+Online: [UTEP, Nigel Ward](https://www.cs.utep.edu/nigel/abstracts/dral-techreport2.html)
 
 ## Contributing
 
