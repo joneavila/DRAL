@@ -1,229 +1,195 @@
-# This script transcribes DRAL English and Spanish short fragments pairs with OpenAI
-# Whisper pre-trained speech recognition models. Its input is fragments-short-full.csv
-# created by make_DRAL_release.py. Its output is an augmented metadata CSV file, adding
-# the column `text`.
+# Transcribe DRAL English and Spanish short fragments with OpenAI Whisper models.
+#
+# The inputs are the single-speaker concatenated conversation audios
+# (fragments-short-contatenated/*.wav) and metadata CSV file
+# (`fragments-short-matlab.csv`). The output is an augmented metadata CSV file
+# (`fragments-short-matlab-transcribed.csv`), adding the columns: text, segments.
+#
+# To improve the quality of transcriptions, each single-speaker conversation audio is
+# transcribed, then the transcription segments are matched to the individual fragments.
+#
+# The previous version of this code used a second, C++ implementation of OpenAI Whisper
+# (https://github.com/ggerganov/whisper.cpp), which is no longer needed for Apple
+# silicon devices.
 
-import subprocess
 from pathlib import Path
 
 import pandas as pd
 import whisper
-from sox import file_info
-from tqdm import tqdm
-from tqdm.contrib.concurrent import process_map
-from utils.dirs import make_dirs_in_path_if_not_exist
-from utils.sox import resample
+from tqdm import tqdm  # For progress bars.
+
+
+class WhisperException(Exception):
+    # Class for exceptions raised by OpenAI Whisper.
+    pass
+
+
+whisper_lang_to_model_name = {
+    # The available models and languages are listed here:
+    # https://github.com/openai/whisper#available-models-and-languages
+    "en": "base.en",
+    "es": "base",
+}
 
 
 def main():
     tqdm.pandas()
 
-    dir_dral_release = Path("/Users/jon/Documents/dissertation/DRAL-corpus/release")
-    path_input_metadata = dir_dral_release.joinpath("fragments-short-full.csv")
+    dir_this_script = Path(__file__).parent
 
-    # Load the fragments metadata into a DataFrame.
-    df_frags = pd.read_csv(path_input_metadata, index_col="id")
+    dir_release = dir_this_script.joinpath("release")
+    path_input_metadata = dir_release.joinpath("fragments-short-matlab.csv")
 
-    df_frags = get_en_es_fragments(df_frags)
-
-    # Resample to 16 kHz.
-    sample_rate_hz = 16000
-    dir_resampled_audio = dir_dral_release.joinpath(f"fragments-short-{sample_rate_hz}")
-    df_frags = resample_fragments(df_frags, dir_resampled_audio, sample_rate_hz)
-
-    df_frags = transcribe_fragments(df_frags)
-
-    df_frags = mark_faulty_fragments(df_frags)
-
-    # Overwrite the metadata with augmented metadata.
-    df_frags.to_csv(path_input_metadata)
-
-
-def get_en_es_fragments(df_frags: pd.DataFrame) -> pd.DataFrame:
-    is_en_to_es = (df_frags["lang_code"] == "EN") & (
-        df_frags["trans_lang_code"] == "ES"
+    df_frags = pd.read_csv(
+        path_input_metadata,
+        index_col="id",
     )
-    idx_en_to_es = df_frags[is_en_to_es].index.tolist()
-    idx_es_to_en = df_frags[is_en_to_es].trans_id.tolist()
-    idx = idx_en_to_es + idx_es_to_en
-    df_frags = df_frags.loc[idx]
-    return df_frags
+
+    # Convert the "time_start_rel" and "time_end_rel" columns to TimeDelta objects.
+    df_frags["time_start_rel"] = pd.to_timedelta(df_frags["time_start_rel"])
+    df_frags["time_end_rel"] = pd.to_timedelta(df_frags["time_end_rel"])
+
+    # Transcribe the fragments one language at a time. The model is kept in memory
+    # between transcriptions to speed up the process.
+    df_frags_en = df_frags[df_frags["lang_code"] == "EN"]
+    df_frags_es = df_frags[df_frags["lang_code"] == "ES"]
+
+    # Transcribe using the first method.
+    df_frags_en_transcribed = transcribe_frags_full_with_segments(
+        df_frags_en, dir_release, "en"
+    )
+    df_frags_es_transcribed = transcribe_frags_full_with_segments(
+        df_frags_es, dir_release, "es"
+    )
+
+    # Transcribe using the second method.
+    df_frags_en_transcribed = transcribe_frags_by_utterance(
+        df_frags_en, dir_release, "en"
+    )
+    df_frags_es_transcribed = transcribe_frags_by_utterance(
+        df_frags_es, dir_release, "es"
+    )
+
+    # Combine the augmented DataFrames, sort by fragment ID.
+    df_frags_transcribed = pd.concat(
+        [df_frags_en_transcribed, df_frags_es_transcribed]
+    ).sort_index()
+
+    # Create column "text" that copies "text1" if available, otherwise "text2".
+    df_frags_transcribed = df_frags
+    df_frags_transcribed["text"] = df_frags_transcribed["text1"].fillna(
+        df_frags_transcribed["text2"]
+    )
+
+    # Write the augmented metadata to CSV.
+    path_out_metadata = path_input_metadata.parent.joinpath(
+        f"{path_input_metadata.stem}-transcribed{path_input_metadata.suffix}"
+    )
+    df_frags_transcribed.to_csv(path_out_metadata)
 
 
-def resample_fragments(
-    df_frags: pd.DataFrame, dir_output: Path, sample_rate_hz: float
+def transcribe_frags_full_with_segments(
+    df_frags: pd.DataFrame, dir_release: Path, whisper_lang_code: str
 ) -> pd.DataFrame:
-    # TODO Does the Midlevel Toolkit prefer the same sample rate?
+    # Method 1 of transcribing fragments: Transcribe the full conversation audio, then
+    # match the transcription segments to the individual fragments. Returns a DataFrame
+    # with added columns "segments1" and "text1".
 
-    make_dirs_in_path_if_not_exist(dir_output)
+    model_name = whisper_lang_to_model_name[whisper_lang_code]
 
-    # Add a new column with the path to the resampled audio.
-    def get_path_resampled(path_audio_str: str, dir_output: Path) -> str:
-        path_audio = Path(path_audio_str)
-        path_audio_resampled = dir_output.joinpath(f"{path_audio.name}")
-        return str(path_audio_resampled)
+    model = whisper.load_model(model_name, in_memory=True)
 
-    df_frags["audio_path_resampled"] = df_frags.apply(
-        lambda frag: get_path_resampled(frag.audio_path, dir_output), axis=1
-    )
+    concat_audio_paths = pd.unique(df_frags["concat_audio_path"])
+    for path_concat_audio in tqdm(concat_audio_paths, total=len(concat_audio_paths)):
+        df_frags_conv = df_frags[df_frags["concat_audio_path"] == path_concat_audio]
 
-    # Resample fragments in parallel.
-    print("Resampling fragments...")
-    n_frags = len(df_frags)
-    process_map(
-        resample,
-        df_frags["audio_path"],
-        df_frags["audio_path_resampled"],
-        [sample_rate_hz] * n_frags,
-        total=n_frags,
-        chunksize=8,
-    )
+        path_audio_full = dir_release.joinpath(path_concat_audio)
 
-    return df_frags
+        try:
+            result = model.transcribe(
+                str(path_audio_full),
+                language=whisper_lang_code,
+                word_timestamps=True,
+                verbose=True,
+                condition_on_previous_text=False,  # Each conversation is transcribed independently.
+                fp16=False,  # Apple silicon does not support fp16.
+            )
+        except WhisperException:
+            print("Exception when transcribing fragment (TODO Handle)")
+            continue
 
+        segments = result["segments"]
 
-def transcribe_fragments(df_frags: pd.DataFrame) -> pd.DataFrame:
+        # Collect all "words" into a flat list.
+        conversation_words = [word for segment in segments for word in segment["words"]]
 
-    # If the fragments have been transcribed before, ignore fragments with existing
-    # transcription, else transcribe all fragments.
-    if "text" in df_frags.columns:
-        to_transcribe = df_frags[df_frags["text"].isna()].index
-    else:
-        to_transcribe = df_frags.index
+        # Convert the "start" and "end" values to Timedelta.
+        for word in conversation_words:
+            word["start"] = pd.to_timedelta(word["start"], unit="s")
+            word["end"] = pd.to_timedelta(word["end"], unit="s")
 
-    print(f"Transcribing {len(to_transcribe)} fragments...")
-    df_frags.loc[to_transcribe, "text"] = df_frags.loc[to_transcribe].progress_apply(
-        lambda frag: transcribe_cpp(frag.lang_code, frag.audio_path_resampled), axis=1
-    )
+        # Sort df_frags_conv by time_start_rel.
+        df_frags_conv = df_frags_conv.sort_values(by="time_start_rel")
 
-    return df_frags
+        # Insert the words that fall within the time range of the row.
+        for idx, row in df_frags_conv.iterrows():
+            # Get the words that fall within the time range of the row.
+            words = [
+                word
+                for word in conversation_words
+                if row["time_start_rel"] <= word["start"] <= row["time_end_rel"]
+            ]
 
+            # Save the list words as a string.
+            df_frags.loc[idx, "segments1"] = str(words)
 
-def mark_faulty_fragments(df_frags: pd.DataFrame) -> pd.DataFrame:
-    def is_bad_text(text: str):
-
-        # Is always bad if empty.
-        if pd.isna(text):
-            return True
-
-        allowed_chars = set(
-            "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.…-,'\"$¿?¡!ÁáÉéÍíÓóÚúÜüÑñ "
-        )
-        return not set(text) <= allowed_chars
-
-    has_bad_text = df_frags["text"].apply(is_bad_text)
-    n_has_bad_text = has_bad_text.sum()
-    print(f"{n_has_bad_text} fragments have bad text:")
-    print(df_frags.loc[has_bad_text, "text"].to_string())
-
-    # Get indices of fragments with bad text and their translations.
-    idx_has_bad_text = df_frags[has_bad_text].index.values.tolist()
-    idx_has_bad_text_trans = df_frags.loc[idx_has_bad_text, "trans_id"].tolist()
-    idx_to_mark = list(set(idx_has_bad_text + idx_has_bad_text_trans))
-
-    print(f"{len(idx_to_mark)} fragments (or translation) have bad text.")
-
-    # Replace problem text with empty value.
-    df_frags.loc[idx_to_mark, "text"] = None
+            # Join the words into a string and insert.
+            text = " ".join([word["word"] for word in words])
+            df_frags.loc[idx, "text1"] = text
 
     return df_frags
 
 
-# Whisper transcription can be done within Python but is slow on Apple silicon. Instead,
-# I use whisper.cpp, an optimized implementation. See the docs:
-# - OpenAI Whisper: https://github.com/openai/whisper
-# - whisper.cpp: https://github.com/ggerganov/whisper.cpp
+def transcribe_frags_by_utterance(
+    df_frags: pd.DataFrame, dir_release: Path, whisper_lang_code: str
+) -> pd.DataFrame:
+    # Method 2 of transcribing fragments: Transcribe each fragment independently. This
+    # method is *significantly* slower. Returns a DataFrame with added columns
+    # "segments2" and "text2".
 
-# Whisper pre-trained models are either multilingual or English-only. "For
-# English-only applications, the .en models tend to perform better"
-# https://github.com/openai/whisper The "large" size does not have an English-only
-# version.
-# Load the English-only model to transcribe EN fragments.
-# Load the multilingual model to transcribe ES fragments.
+    model_name = whisper_lang_to_model_name[whisper_lang_code]
 
+    model = whisper.load_model(model_name, in_memory=True)
 
-class WhisperException(Exception):
-    pass
+    concat_audio_paths = pd.unique(df_frags["concat_audio_path"])
+    for path_concat_audio in tqdm(concat_audio_paths, total=len(concat_audio_paths)):
+        df_frags_conv = df_frags[df_frags["concat_audio_path"] == path_concat_audio]
 
+        df_frags_conv = df_frags_conv.sort_values(by="time_start_rel")
 
-def transcribe_cpp(lang_code: str, path_audio_str: str) -> str:
+        # Iterate over the rows of df_frags_conv.
+        for idx, row in df_frags_conv.iterrows():
+            path_audio_full = dir_release.joinpath(row["audio_path"])
 
-    # Audio must be 16 kHz.
-    sample_rate = file_info.sample_rate(path_audio_str)
-    sample_rate_required_hz = 16000
-    if int(sample_rate) != sample_rate_required_hz:
-        raise WhisperException(f"Sample rate must be {sample_rate_required_hz} Hz.")
+            try:
+                result = model.transcribe(
+                    str(path_audio_full),
+                    language=whisper_lang_code,
+                    word_timestamps=True,
+                    verbose=True,
+                    condition_on_previous_text=True,
+                    fp16=False,  # Apple silicon does not support fp16.
+                )
+            except WhisperException:
+                print("Exception when transcribing fragment (TODO Handle)")
+                continue
 
-    path_whisper_cpp = Path("/Users/jon/Desktop/whisper.cpp")
-    path_whisper_cpp_main = path_whisper_cpp.joinpath("main")
-    path_whisper_cpp_model_en = path_whisper_cpp.joinpath("models/ggml-base.en.bin")
-    path_whisper_cpp_model_es = path_whisper_cpp.joinpath("models/ggml-base.bin")
+            # Insert the words that fall within the time range of the row.
+            df_frags.loc[idx, "segments2"] = str(result["segments"])
+            df_frags.loc[idx, "text2"] = result["text"]
 
-    if lang_code == "EN":
-        path_whisper_cpp_model = path_whisper_cpp_model_en
-        language = "en"
-    elif lang_code == "ES":
-        path_whisper_cpp_model = path_whisper_cpp_model_es
-        language = "es"
-    else:
-        raise WhisperException("Unexpected language code.")
-
-    completed_process = subprocess.run(
-        args=[
-            str(path_whisper_cpp_main),
-            "--model",
-            str(path_whisper_cpp_model),
-            "--no-timestamps",
-            "--file",
-            path_audio_str,
-            "--language",
-            language,
-        ],
-        capture_output=True,
-    )
-
-    if completed_process.returncode != 0:
-        print(completed_process.stderr)
-        raise WhisperException("whisper.cpp return code was not zero.")
-
-    # TODO Try `subprocess(encoding="utf-8") instead. See:
-    # https://docs.python.org/3/library/subprocess.html
-    std_out = completed_process.stdout
-    std_out_decoded = str(std_out, "utf-8")
-    std_out_decoded_striped = std_out_decoded.strip()
-
-    transcription_text = std_out_decoded_striped
-
-    return transcription_text
-
-
-def transcribe(lang_code: str, path_audio_str: str) -> str:
-
-    result = None
-    if lang_code == "EN":
-        model = whisper.load_model("small.en")
-        language = "en"
-    elif lang_code == "ES":
-        model = whisper.load_model("small")
-        language = "es"
-    else:
-        raise WhisperException("Unexpected language code.")
-
-    result = model.transcribe(
-        path_audio_str,
-        language=language,
-        condition_on_previous_text=False,
-        without_timestamps=True,
-        fp16=False,
-    )
-
-    transcription_text = result["text"]
-    # transcription_language = result["language"]
-    # transcription_segments = str(result["segments"])
-
-    return transcription_text
+    return df_frags
 
 
 if __name__ == "__main__":
-
     main()
