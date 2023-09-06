@@ -88,49 +88,87 @@ Adjust instructions if there are multiple segments.
 
 ## Print corpus statistics
 
-Print corpus statistics -- such as the number of conversations, and utterances, their
-duration, and the number of participants -- with `print_stats.py`.
+Print corpus statistics, such as the number of conversations, utterances, total
+duration, and the number of participants.
 
 ```python
-python print_stats.py --help
+python print_release_stats.py --help
 ```
 
-### Example output
+### Example output (DRAL 8.0)
 
-```zsh
+```txt
 ********** conversations **********
-count (original) = 79
-count (re-enacted) = 79
+count (original) = 136
+ EN count = 136
+ ES count = 128
+ JA count = 2
+ BN count = 4
+ FR count = 2
+count (re-enacted) = 136
+ EN count = 136
+ ES count = 128
+ JA count = 2
+ BN count = 4
+ FR count = 2
 ********** participants **********
-count (unique) = 57
+count (unique) = 69
 ********** short fragments ("phrases") **********
-count (original or re-enacted) = 4580
- EN count = 2290
- ES count = 2290
+count (original or re-enacted) = 7632
+ EN count = 3816
+ ES count = 3816
  JA count = 0
  BN count = 0
  FR count = 0
-count (original) = 2290
-count (re-enacted) = 2290
+count (original) = 3816
+count (re-enacted) = 3816
 duration
- total = 0 days 03:18:31.034000
- mean = 0 days 00:00:02.600662445
+ total = 0 days 05:44:30.656000
+ mean = 0 days 00:00:02.708419287
  minimum = 0 days 00:00:00.150000
- maximum = 0 days 00:00:11.940000
+ maximum = 0 days 00:00:12.925000
+********** short fragments ("phrases") EN-ES only **********
+count (original or re-enacted) = 7632
+ EN count = 3816
+ ES count = 3816
+ JA count = 0
+ BN count = 0
+ FR count = 0
+count (original) = 3816
+count (re-enacted) = 3816
+duration
+ total = 0 days 05:44:30.656000
+ mean = 0 days 00:00:02.708419287
+ minimum = 0 days 00:00:00.150000
+ maximum = 0 days 00:00:12.925000
 ********** long fragments ("re-enactments") **********
-count (original or re-enacted) =  3610
- EN count = 1805
- ES count = 1652
+count (original or re-enacted) =  5692
+ EN count = 2846
+ ES count = 2693
  JA count = 49
  BN count = 65
  FR count = 39
-count (original) = 1805
-count (re-enacted) = 1805
+count (original) = 2846
+count (re-enacted) = 2846
 duration
- total = 0 days 03:41:31.456000
- mean = 0 days 00:00:03.681843767
+ total = 0 days 05:59:50.529000
+ mean = 0 days 00:00:03.793135804
  minimum = 0 days 00:00:00.750000
  maximum = 0 days 00:00:22.783000
+********** long fragments ("phrases") EN-ES only **********
+count (original or re-enacted) =  5386
+ EN count = 2693
+ ES count = 2693
+ JA count = 0
+ BN count = 0
+ FR count = 0
+count (original) = 2693
+count (re-enacted) = 2693
+duration
+ total = 0 days 05:36:23.583000
+ mean = 0 days 00:00:03.747416078
+ minimum = 0 days 00:00:00.750000
+ maximum = 0 days 00:00:12.925000
 ```
 
 ## Transcribe utterances
