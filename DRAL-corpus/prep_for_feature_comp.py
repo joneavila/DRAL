@@ -1,23 +1,17 @@
 import argparse
 import datetime
-import subprocess
 from itertools import product
 from pathlib import Path
 
 import pandas as pd
+import shared
+from invoke_reaper import invoke_reaper
 from tqdm.contrib.concurrent import process_map
 from utils.dirs import make_dirs_in_path_if_not_exist
 from utils.sox import concatenate_audios
 
-import shared
-
 
 def main() -> None:
-
-    # TODO Add support for synthesis workflow.
-    # TODO Currently the short fragment "complete" metadata contains full paths to
-    # audios. Relative paths may be better.
-
     dir_this_file = Path(__file__).parent.resolve()
 
     parser = argparse.ArgumentParser(
@@ -29,9 +23,9 @@ def main() -> None:
     )
     parser.add_argument(
         "-i",
-        "--path_metadata",
-        help="Path to DRAL release short fragments complete metadata.",
-        default=dir_this_file.joinpath("release/fragments-short-complete.csv"),
+        "--dir_input",
+        help="Path to DRAL release.",
+        default=dir_this_file.joinpath("release"),
     )
     parser.add_argument(
         "-o",
@@ -41,7 +35,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    path_input_metadata = Path(args.path_metadata)
+    path_input_metadata = args.dir_input.joinpath("fragments-short-complete.csv")
     dir_output = Path(args.dir_output)
 
     path_output_metadata = dir_output.joinpath("fragments-short-matlab.csv")
@@ -61,36 +55,13 @@ def main() -> None:
 
     df_frags = drop_fragments_with_short_duration(df_frags)
 
+    df_frags["audio_path"] = df_frags["audio_path"].apply(
+        lambda p: Path(args.dir_input).joinpath(p)
+    )
+
     df_frags = concatenate_fragment_audios(df_frags, dir_output_concat_audios)
 
-    # Convert duration columns from Timedelta to formatted string.
-    df_frags["duration"] = df_frags["duration"].apply(_timedelta_to_matlab_string)
-    df_frags["time_start_rel"] = df_frags["time_start_rel"].apply(
-        _timedelta_to_matlab_string
-    )
-    df_frags["time_end_rel"] = df_frags["time_end_rel"].apply(
-        _timedelta_to_matlab_string
-    )
-
-    # Write only the columns expected by MATLAB scripts, in order.
-    df_frags.to_csv(
-        path_output_metadata,
-        columns=[
-            "conv_id",
-            "lang_code",
-            "original_or_reenacted",
-            "time_start_rel",
-            "time_end_rel",
-            "duration",
-            "concat_audio_path",
-            "trans_id",
-            "trans_lang_code",
-            "participant_id_unique",
-        ],
-    )
-
     print("Estimating pitch with REAPER...")
-
     make_dirs_in_path_if_not_exist(dir_output_concat_audios_pitch)
     paths_reaper_inputs = pd.unique(df_frags["concat_audio_path"])
     paths_reaper_outputs = [
@@ -102,6 +73,30 @@ def main() -> None:
         paths_reaper_inputs,
         paths_reaper_outputs,
         total=len(paths_reaper_inputs),
+    )
+
+    # Write only the columns expected by MATLAB scripts, in order.
+    df_frags["audio_path"] = df_frags["audio_path"].apply(
+        lambda p: p.relative_to(dir_output)
+    )
+    df_frags["concat_audio_path"] = df_frags["concat_audio_path"].apply(
+        lambda p: p.relative_to(dir_output)
+    )
+    df_frags.to_csv(
+        path_output_metadata,
+        columns=[
+            "conv_id",
+            "lang_code",
+            "original_or_reenacted",
+            "time_start_rel",
+            "time_end_rel",
+            "duration",
+            "audio_path",
+            "concat_audio_path",
+            "trans_id",
+            "trans_lang_code",
+            "participant_id_unique",
+        ],
     )
 
     print(f"Done. Output written to: {dir_output}")
@@ -126,7 +121,6 @@ def drop_fragments_with_short_duration(df_frags: pd.DataFrame) -> pd.DataFrame:
 def concatenate_fragment_audios(
     df_frags: pd.DataFrame, dir_output: Path
 ) -> pd.DataFrame:
-
     # New columns to be added.
     col_concat_audio_path = "concat_audio_path"
     col_time_start_relative = "time_start_rel"
@@ -145,7 +139,6 @@ def concatenate_fragment_audios(
     # audio).
     problem_track_tripped = False  # Just for nicer printing.
     for conv_id, tier in list(product(conv_ids_unique, short_tiers)):
-
         # Get indices of fragments belonging to this conversation and tier.
         is_in_conv = df_frags["conv_id"] == conv_id
         is_in_tier = df_frags["tier_name"] == tier.name
@@ -208,42 +201,6 @@ def concatenate_fragment_audios(
 
     # Return the augmented DataFrame.
     return df_frags
-
-
-def invoke_reaper(input_file: Path, output_file: Path):
-    # TODO This might require the right permissions. Use chmod.
-    # TODO Check input file for WAV and output file for TXT.
-    completed_process = subprocess.run(
-        [
-            "reaper",
-            "-i",
-            str(input_file),
-            "-f",
-            str(output_file),
-            "-m",
-            "80",
-            "-x",
-            "500",
-            "-a",
-            "-e",
-            "0.01",
-        ],
-        capture_output=True,
-    )
-    if completed_process.returncode != 0:
-        print(
-            f"REAPER failed: {completed_process.returncode}.\n\tArguments: "
-            f"{completed_process.args}\n\tError: {completed_process.stderr}"
-        )
-
-
-def _timedelta_to_matlab_string(td_str: str) -> str:
-    td = pd.to_timedelta(td_str)
-    minutes = td.components.minutes
-    seconds = td.components.seconds
-    milliseconds = td.components.milliseconds
-    td_str_new = f"{minutes}:{seconds}.{milliseconds:03}"
-    return td_str_new
 
 
 if __name__ == "__main__":
