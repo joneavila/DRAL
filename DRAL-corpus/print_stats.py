@@ -9,7 +9,6 @@ import shared
 
 
 def main():
-
     dir_this_file = Path(__file__).parent.resolve()
     dir_dral_release = dir_this_file.joinpath("release")
 
@@ -85,15 +84,28 @@ def print_conversations(df_conv: pd.DataFrame, file_output: TextIO) -> None:
     ].shape[0]
     file_output.write(f"count (original) = {n_og_conversations}\n")
 
+    # Print number of original conversations by language.
+    for lang_code in shared.LANG_CODES:
+        id_pattern = rf"^{lang_code}.*"
+        series_conv_in_lang = df_conv["id"].str.fullmatch(id_pattern)
+        n_in_lang = series_conv_in_lang.sum()
+        file_output.write(f"\t{lang_code} count = {n_in_lang}\n")
+
     # Print number of re-enacted conversations.
     n_re_conversations = df_conv[
         df_conv["original_or_reenacted"] == shared.CONV_CODE_REENACTED
     ].shape[0]
     file_output.write(f"count (re-enacted) = {n_re_conversations}\n")
 
+    # Print number of re-enacted conversations by language.
+    for lang_code in shared.LANG_CODES:
+        id_pattern = rf"^{lang_code}.*"
+        series_conv_in_lang = df_conv["id"].str.fullmatch(id_pattern)
+        n_in_lang = series_conv_in_lang.sum()
+        file_output.write(f"\t{lang_code} count = {n_in_lang}\n")
+
 
 def print_participants(df_participant: pd.DataFrame, file_output: TextIO) -> None:
-
     # Print number of unique participants.
     n_unique_participant_ids = df_participant["id_unique"].nunique()
     file_output.write(f"count (unique) = {n_unique_participant_ids}\n")
@@ -102,7 +114,6 @@ def print_participants(df_participant: pd.DataFrame, file_output: TextIO) -> Non
 def print_fragments_short(
     df_frag_short: pd.DataFrame, file_output: TextIO, en_es_only: bool = False
 ) -> None:
-
     # Optionally exclude fragments that are not from EN-ES pairs. (DRAL 8.0 does not
     # include any short fragments pairs other than EN-ES, so this isn't very useful.)
     if en_es_only:
@@ -153,7 +164,6 @@ def print_fragments_short(
 def print_fragments_long(
     df_frag_long: pd.DataFrame, file_output: TextIO, en_es_only: bool = False
 ) -> None:
-
     # Optionally exclude fragments that are not from EN-ES pairs.
     if en_es_only:
         df_frag_long = drop_non_en_es(df_frag_long)
