@@ -18,9 +18,11 @@ from compute_feature_corrs import compute_feature_correlations
 
 
 def main() -> None:
-
     # Disable interactive mode.
     plt.ioff()
+
+    DIR_OUTPUT = data.DIR_FEATURE_CORRS
+    DIR_OUTPUT.mkdir(parents=True, exist_ok=True)
 
     df_features_raw_en, df_features_raw_es = data.read_features_en_es()
     (
@@ -38,11 +40,10 @@ def main() -> None:
     }
 
     for lang_pair, df_coefs in coefs.items():
-
         # Make a figure for analysis.
         make_correlations_figure(
             df_coefs,
-            data.DIR_FEATURE_CORRS.joinpath(f"feature-corrs-{lang_pair}-analysis.png"),
+            DIR_OUTPUT.joinpath(f"feature-corrs-{lang_pair}-analysis.png"),
             group_features_labels=False,
             show_coeffs=True,
         )
@@ -50,9 +51,7 @@ def main() -> None:
         # Make a second figure for analysis, with significant coefficients only.
         make_correlations_figure(
             df_coefs,
-            data.DIR_FEATURE_CORRS.joinpath(
-                f"feature-corrs-{lang_pair}-analysis-sig-only.png"
-            ),
+            DIR_OUTPUT.joinpath(f"feature-corrs-{lang_pair}-analysis-sig-only.png"),
             group_features_labels=False,
             show_coeffs=True,
             show_coeffs_sig_only=True,
@@ -61,17 +60,60 @@ def main() -> None:
         # Make a figure for print.
         make_correlations_figure(
             df_coefs,
-            data.DIR_FEATURE_CORRS.joinpath(f"feature-corrs-{lang_pair}-print.png"),
+            DIR_OUTPUT.joinpath(f"feature-corrs-{lang_pair}-print.png"),
         )
 
         # Make a figure for aesthetics.
         make_correlations_figure(
             df_coefs,
-            data.DIR_FEATURE_CORRS.joinpath(f"feature-corrs-{lang_pair}-pretty.png"),
+            DIR_OUTPUT.joinpath(f"feature-corrs-{lang_pair}-pretty.png"),
             group_features_labels=False,
             group_features_grid=False,
             show_coeffs=False,
         )
+
+    # Make figures with the difference between EN-ES and EN-EN.
+    df_coefs_en_es_diff = pd.DataFrame(
+        df_coefs_en_es.values - df_coefs_en_en.values,
+        columns=df_coefs_en_es.columns,
+        index=df_coefs_en_es.index,
+    )
+    # For print.
+    make_correlations_figure(
+        df_coefs_en_es_diff,
+        DIR_OUTPUT.joinpath("feature-corrs-en-es-minus-en-en-print.png"),
+    )
+    # For aesthetics.
+    make_correlations_figure(
+        df_coefs_en_es_diff,
+        DIR_OUTPUT.joinpath("feature-corrs-en-es-minus-en-en-pretty.png"),
+        group_features_labels=False,
+        group_features_grid=False,
+        show_coeffs=False,
+    )
+    # For aesthetics, log norm.
+    make_correlations_figure(
+        df_coefs_en_es_diff,
+        DIR_OUTPUT.joinpath("feature-corrs-en-es-minus-en-en-pretty-normlog.png"),
+        group_features_labels=False,
+        group_features_grid=False,
+        show_coeffs=False,
+        normalization="log",
+    )
+    # For print, log norm.
+    make_correlations_figure(
+        df_coefs_en_es_diff,
+        DIR_OUTPUT.joinpath("feature-corrs-en-es-minus-en-en-print-normlog.png"),
+        normalization="log",
+    )
+    # For analysis, log norm.
+    make_correlations_figure(
+        df_coefs_en_es_diff,
+        DIR_OUTPUT.joinpath("feature-corrs-en-es-minus-en-en-analysis-normlog.png"),
+        normalization="log",
+        group_features_labels=False,
+        show_coeffs=True,
+    )
 
     # Compute the correlations of a subset of the data (DRAL 4.0).
     path_subset_4_0 = (
@@ -81,19 +123,17 @@ def main() -> None:
         path_subset=path_subset_4_0
     )
     (
-        df_coefs_en_en_subset,
+        _,
         df_coefs_en_es_subset,
-        df_coefs_es_en_subset,
-        df_coefs_es_es_subset,
+        _,
+        _,
     ) = compute_feature_correlations(
         df_features_raw_en_subset, df_features_raw_es_subset
     )
     # Make an English and Spanish figure.
     make_correlations_figure(
         df_coefs_en_es_subset,
-        data.DIR_FEATURE_CORRS.joinpath(
-            "feature-corrs-en-es-analysis-sig-only-4.0.png"
-        ),
+        DIR_OUTPUT.joinpath("feature-corrs-en-es-analysis-sig-only-4.0.png"),
         group_features_labels=False,
         show_coeffs=True,
         show_coeffs_sig_only=True,
@@ -101,11 +141,11 @@ def main() -> None:
 
     # Make an English and Spanish figure with the difference between using the full data
     # and a subset.
-    df_coefs_en_es_diff = df_coefs_en_es - df_coefs_en_es_subset
+    df_coefs_en_es_change = df_coefs_en_es - df_coefs_en_es_subset
     make_correlations_figure(
-        df_coefs_en_es_diff,
-        data.DIR_FEATURE_CORRS.joinpath("feature-corrs-en-es-diff-with-4.0.png"),
-        color_map="bwr",
+        df_coefs_en_es_change,
+        DIR_OUTPUT.joinpath("feature-corrs-en-es-diff-with-4.0.png"),
+        color_map_str="bwr",
         data_range_min=-0.25,
         data_range_max=0.25,
         group_features_labels=False,
@@ -117,7 +157,7 @@ def main() -> None:
 def make_correlations_figure(
     df_coefs: pd.DataFrame,
     path_output: Path,
-    color_map: str = "PuOr",
+    color_map_str: str = "PuOr",
     data_range_min: Optional[float] = -1.0,
     data_range_max: Optional[float] = 1.0,
     group_features_labels: bool = True,
@@ -125,13 +165,16 @@ def make_correlations_figure(
     show_coeffs: bool = False,
     show_coeffs_sig_only: bool = False,
     show_coeffs_sign: bool = False,
+    normalization: Optional[str] = "linear",
 ) -> None:
+    if path_output.exists():
+        print(f"File already exists: {path_output}")
+        return
 
-    # Convert the values of df_coefs into a numpy array, round.
     coefs = df_coefs.values
-    coefs_rounded = np.round_(coefs, 2)
+    coefs_rounded = np.round(coefs, 2)
 
-    # Set x_labels to the column names, y_labels to the index names.
+    # Set x-axis labels to the column names, y-axis labels to the index names.
     x_labels = df_coefs.columns.tolist()
     y_labels = df_coefs.index.tolist()
 
@@ -139,7 +182,7 @@ def make_correlations_figure(
     fig_size_height_pixels = fig_size_width_pixels
     pixel_in_inches = 1 / plt.rcParams["figure.dpi"]
 
-    fig, axes = plt.subplots(
+    fig, ax = plt.subplots(
         figsize=(
             fig_size_width_pixels * pixel_in_inches,
             fig_size_height_pixels * pixel_in_inches,
@@ -154,14 +197,35 @@ def make_correlations_figure(
             np.abs(coefs_rounded) < SIGNIFICANT_THRESHOLD, 0, coefs_rounded
         )
 
-    res = axes.imshow(coefs_rounded, mpl.colormaps[color_map], vmin=data_range_min, vmax=data_range_max)  # type: ignore
-
     FONT_LARGE_SIZE = 128
     FONT_SMALL_SIZE = 16
     FONT_SMALL_STROKE_WIDTH = 4
 
-    # Add legend.
-    clb = plt.colorbar(res, shrink=0.5)
+    if normalization == "log":
+        res = ax.imshow(
+            coefs_rounded,
+            norm=mpl.colors.SymLogNorm(0.25, linscale=1.0, clip=True),
+            cmap="bwr",
+        )  # type: ignore
+
+        clb = fig.colorbar(
+            res,
+            shrink=0.5,
+            spacing="proportional",
+            format="%.2f",
+            ticks=np.arange(
+                coefs_rounded.min(axis=None), coefs_rounded.max(axis=None) + 0.2, 0.2
+            ),
+        )
+    else:
+        res = plt.imshow(
+            coefs_rounded,
+            mpl.colormaps[color_map_str],
+            vmin=data_range_min,
+            vmax=data_range_max,
+        )  # type: ignore
+        clb = fig.colorbar(res, shrink=0.5)
+
     clb.ax.tick_params(labelsize=FONT_LARGE_SIZE)
     # clb.set_label(label="rho", size=FONT_LARGE_SIZE, weight="bold")
 
@@ -179,14 +243,10 @@ def make_correlations_figure(
             # for label in data.FEATURE_BASE_CODE_TO_NAMES.values()
             for label in data.FEATURE_BASE_CODE_TO_NAMES.keys()
         ]
-        axes.set_xticks(
-            np.arange(4, 100, 10), labels=x_labels, fontsize=FONT_LARGE_SIZE
-        )
-        axes.tick_params(axis="x", bottom=False)
-        axes.set_yticks(
-            np.arange(4, 100, 10), labels=y_labels, fontsize=FONT_LARGE_SIZE
-        )
-        axes.tick_params(axis="y", bottom=False)
+        ax.set_xticks(np.arange(4, 100, 10), labels=x_labels, fontsize=FONT_LARGE_SIZE)
+        ax.tick_params(axis="x", bottom=False)
+        ax.set_yticks(np.arange(4, 100, 10), labels=y_labels, fontsize=FONT_LARGE_SIZE)
+        ax.tick_params(axis="y", bottom=False)
         # Rotate axes labels 45 degrees.
         # plt.setp(
         #     axes.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor"
@@ -196,22 +256,20 @@ def make_correlations_figure(
         # )
     else:
         # Add labels and ticks for each feature.
-        axes.set_xticks(
+        ax.set_xticks(
             np.arange(len(x_labels)),
             labels=x_labels,
             fontsize=FONT_SMALL_SIZE,
             weight="bold",
         )
-        axes.set_yticks(
+        ax.set_yticks(
             np.arange(len(y_labels)),
             labels=y_labels,
             fontsize=FONT_SMALL_SIZE,
             weight="bold",
         )
         # Rotate x-axis labels 90 degrees.
-        plt.setp(
-            axes.get_xticklabels(), rotation=90, ha="right", rotation_mode="anchor"
-        )
+        plt.setp(ax.get_xticklabels(), rotation=90, ha="right", rotation_mode="anchor")
 
     if group_features_grid:
         # Add grid lines to separate the base features.
@@ -229,7 +287,7 @@ def make_correlations_figure(
                     color="black",
                     linewidth=8,
                 )
-                axes.add_patch(rec)
+                ax.add_patch(rec)
 
     if show_coeffs:
         for i in range(coefs_rounded.shape[0]):
@@ -243,7 +301,7 @@ def make_correlations_figure(
                     coef = f"{coef:+.2f}"
 
                 # Add text for the coefficient.
-                text = axes.text(
+                text = ax.text(
                     j,
                     i,
                     coef,
@@ -258,14 +316,12 @@ def make_correlations_figure(
                         patheffects.withStroke(
                             linewidth=FONT_SMALL_STROKE_WIDTH, foreground="white"
                         )
-                    ] # type: ignore
+                    ]  # type: ignore
                 )
 
-    # # Create the output directory.
-    # path_output.mkdir(parents=True, exist_ok=True)
-
     # Write the figure as an image to the output path.
-    fig.savefig(str(path_output), bbox_inches="tight")
+    plt.savefig(str(path_output), bbox_inches="tight")
+
     print(f"Output written to: {path_output}")
 
 
