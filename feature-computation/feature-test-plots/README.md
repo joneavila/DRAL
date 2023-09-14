@@ -1,4 +1,4 @@
-# feature-validation
+# feature-test-plots
 
 **This code was last updated December 15, 2022 and may not be compatible with the updated workflow.**
 
