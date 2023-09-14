@@ -13,8 +13,7 @@ from utils.sox import is_silent, trim_remix_audio, validate_with_sox
 
 
 def main() -> None:
-
-    dir_this_file = Path(__file__).parent.resolve()
+    dir_this_script_relative = Path(__file__).parent
 
     parser = argparse.ArgumentParser(
         description="Make a Dialogs Re-enacted Across Languages (DRAL) release.",
@@ -27,7 +26,7 @@ def main() -> None:
         "subdirectory named 'recordings' containing their audios (.wav) and markups "
         "(.eaf). For more information on the metadata Excel workbook sheets and "
         "fields, see the techincal report.",
-        default=dir_this_file.joinpath("raw-data"),
+        default=dir_this_script_relative.joinpath("raw-data"),
     )
     parser.add_argument(
         "-o",
@@ -36,7 +35,7 @@ def main() -> None:
         "(.wav), conversation short fragment audios (.wav), conversation long fragment "
         "audios (.wav), and the following metadata sheets (.csv): conversation, "
         "fragments-short, fragments-long, participant, producer.",
-        default=dir_this_file.joinpath("release"),
+        default=dir_this_script_relative.joinpath("release"),
     )
     parser.add_argument(
         "--warn-silence",
@@ -89,7 +88,7 @@ def main() -> None:
         return
 
     # Set pandas options to display all rows when printing DataFrames, for debugging.
-    pd.set_option('display.max_rows', None)
+    pd.set_option("display.max_rows", None)
 
     # Check for broken audios with SoX, to avoid SoX errors downstream.
     print("Validating WAV files...")
@@ -137,7 +136,7 @@ def main() -> None:
     df_producer = _get_producer_dataframe(path_input_metadata, df_conv)
 
     # Write conversation audio copies in parallel.
-    print("Writing conversation audios...")
+    print("Copying conversation audios...")
     process_map(
         copy,
         df_conv["audio_path"],
@@ -242,7 +241,14 @@ def main() -> None:
     )
 
     # Write short fragments metadata to a second CSV. This CSV includes all columns and
-    # should excluded from public releases.
+    # is excluded from public releases.
+    # Convert the path columns back to relative paths.
+    df_markup_short["audio_path"] = df_markup_short["audio_path"].apply(
+        lambda path: path.relative_to(dir_output_root)
+    )
+    df_markup_short["conv_audio_path"] = df_markup_short["conv_audio_path"].apply(
+        lambda path: path.relative_to(dir_output_root)
+    )
     df_markup_short.to_csv(
         dir_output_root.joinpath("fragments-short-complete.csv"),
     )
@@ -266,7 +272,14 @@ def main() -> None:
     )
 
     # Write long fragments metadata to a second CSV. This CSV includes all columns and
-    # is excluded from public releases, used for my dissertation project.
+    # is excluded from public releases.
+    # Convert the path columns back to relative paths.
+    df_markup_long["audio_path"] = df_markup_long["audio_path"].apply(
+        lambda path: path.relative_to(dir_output_root)
+    )
+    df_markup_long["conv_audio_path"] = df_markup_long["conv_audio_path"].apply(
+        lambda path: path.relative_to(dir_output_root)
+    )
     df_markup_long.to_csv(
         dir_output_root.joinpath("fragments-long-complete.csv"),
     )
@@ -279,7 +292,6 @@ def _get_conversation_dataframe(
     dir_input_recordings: Path,
     dir_output_conv_audio: Path,
 ) -> pd.DataFrame:
-
     # Read the original conversation metadata into a DataFrame.
     df_conv = pd.read_excel(path_input_metadata, "conversation")
 
@@ -401,7 +413,6 @@ def _get_markup_dataframes(
     dir_output_frag_audio_short: Path,
     dir_output_frag_audio_long: Path,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
-
     df_conv = df_conv_in.copy()
 
     # Read all markups (short fragments and long fragments) into a single DataFrame. Add
@@ -419,7 +430,7 @@ def _get_markup_dataframes(
         df_conv_markup["trans_conv_id"] = conv.trans_id
         df_conv_markup["lang_code"] = conv.lang_code
         df_conv_markup["trans_lang_code"] = conv.trans_lang_code
-        df_conv_markup["conv_audio_path"] = conv.audio_path
+        df_conv_markup["conv_audio_path"] = conv.copy_audio_path
         df_conv_markup["original_or_reenacted"] = conv.original_or_reenacted
         df_conv_markup["participant_id_left"] = conv.participant_id_left
         df_conv_markup["participant_id_right"] = conv.participant_id_right
@@ -549,7 +560,6 @@ def _get_markup_dataframes(
 def _get_participant_dataframe(
     path_input_metadata: Path, df_conv_in: pd.DataFrame
 ) -> pd.DataFrame:
-
     df_conv = df_conv_in.copy()
 
     df_participant = pd.read_excel(path_input_metadata, "participant")
@@ -599,7 +609,6 @@ def _get_participant_dataframe(
 def _get_producer_dataframe(
     path_input_metadata: Path, df_conv_in: pd.DataFrame
 ) -> pd.DataFrame:
-
     df_conv = df_conv_in.copy()
 
     # Read the original producer metadata into a DataFrame.
