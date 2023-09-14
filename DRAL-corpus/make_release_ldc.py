@@ -28,7 +28,6 @@ import sox
 
 
 def main():
-
     # Input paths.
     dir_this = Path(__file__).parent
     # Input paths: DRAL 8.0.
@@ -76,7 +75,7 @@ def main():
     # be in other language pairs. Drop the fragments that are not part of an
     # English-Spanish pair.
     #
-    # Duplicate code in print_stats.py.
+    # Duplicate code in print_release_stats.py.
     print("Dropping non-English-Spanish fragment pairs...")
     is_en_with_es_pair = (df_frag_long["lang_code"] == "EN") & (
         df_frag_long["trans_id"].str.startswith("ES")
@@ -142,7 +141,6 @@ def add_partition_metadata(df_frag_in: pd.DataFrame) -> pd.DataFrame:
     conv_nums_test = range(105, 137)  # 105-136
 
     def determine_set(frag_id: str) -> str:
-
         # The conversation number is the second element in the fragment ID, separated
         # by an underscore, e.g., "EN_001_3" is sourced from conversation 1.
         conv_num = int(frag_id.split("_")[1])
