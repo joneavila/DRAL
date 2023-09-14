@@ -1,0 +1,71 @@
+********** conversations **********
+count (original) = 136
+	EN count = 136
+	ES count = 128
+	JA count = 2
+	BN count = 4
+	FR count = 2
+count (re-enacted) = 136
+	EN count = 136
+	ES count = 128
+	JA count = 2
+	BN count = 4
+	FR count = 2
+********** participants **********
+count (unique) = 69
+********** short fragments ("phrases") **********
+count (original or re-enacted) = 7632
+	EN count = 3816
+	ES count = 3816
+	JA count = 0
+	BN count = 0
+	FR count = 0
+count (original) = 3816
+count (re-enacted) = 3816
+duration
+	total = 0 days 05:44:30.656000
+	mean = 0 days 00:00:02.708419287
+	minimum = 0 days 00:00:00.150000
+	maximum = 0 days 00:00:12.925000
+********** short fragments ("phrases") EN-ES only **********
+count (original or re-enacted) = 7632
+	EN count = 3816
+	ES count = 3816
+	JA count = 0
+	BN count = 0
+	FR count = 0
+count (original) = 3816
+count (re-enacted) = 3816
+duration
+	total = 0 days 05:44:30.656000
+	mean = 0 days 00:00:02.708419287
+	minimum = 0 days 00:00:00.150000
+	maximum = 0 days 00:00:12.925000
+********** long fragments ("re-enactments") **********
+count (original or re-enacted) =  5692
+	EN count = 2846
+	ES count = 2693
+	JA count = 49
+	BN count = 65
+	FR count = 39
+count (original) = 2846
+count (re-enacted) = 2846
+duration
+	total = 0 days 05:59:50.529000
+	mean = 0 days 00:00:03.793135804
+	minimum = 0 days 00:00:00.750000
+	maximum = 0 days 00:00:22.783000
+********** long fragments ("phrases") EN-ES only **********
+count (original or re-enacted) =  5386
+	EN count = 2693
+	ES count = 2693
+	JA count = 0
+	BN count = 0
+	FR count = 0
+count (original) = 2693
+count (re-enacted) = 2693
+duration
+	total = 0 days 05:36:23.583000
+	mean = 0 days 00:00:03.747416078
+	minimum = 0 days 00:00:00.750000
+	maximum = 0 days 00:00:12.925000
