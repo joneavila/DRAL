@@ -1,6 +1,11 @@
 # Utterances with same text
 
-Text in italics has been verified by listening to the audio (mostly *no* and *yeah* utterances).
+Text in italics has been verified by listening to the audio (*no*, *yeah*, and *uh-huh* utterances).
+
+## *ah okay*
+
+- EN_090_2 *ah okay* – like "I get it now"
+- EN_120_10 *ah okay*
 
 ## *and*
 
@@ -47,13 +52,8 @@ Text in italics has been verified by listening to the audio (mostly *no* and *ye
 
 ## *oh*
 
-- EN_009_16
-- EN_068_12
-- EN_071_22
-- EN_075_23
-- EN_103_8
-- EN_122_26
-- EN_122_30
+- EN_068_12 *oh* – like "I get it now"
+- EN_071_22 *oh* – disappointed
 
 ## *oh yeah*
 
@@ -63,13 +63,13 @@ Text in italics has been verified by listening to the audio (mostly *no* and *ye
 
 ## *okay*
 
-- EN_013_37
-- EN_015_37
-- EN_017_6
-- EN_070_11
-- EN_090_2
-- EN_114_25
-- EN_120_10
+- EN_013_37 *okay* – maybe disappointed
+- EN_017_6 *okay* – like "Go on"
+
+## *ooh*
+
+- EN_075_23 *ooh*
+- EN_122_30 *ooh*
 
 ## *like*
 
@@ -112,24 +112,16 @@ Text in italics has been verified by listening to the audio (mostly *no* and *ye
 
 ## *uh-huh*
 
-- EN_077_34
-- EN_089_13
-- EN_100_18
-- EN_102_4
-- EN_136_23
+- EN_077_34 *uh-huh*
+- EN_089_13 *uh-huh*
+- EN_100_18 *uh-huh*
+- EN_136_23 *uh-huh*
 
 ## *well*
 
 - EN_008_9
 - EN_102_10
 - EN_129_11
-
-## *what*
-
-- EN_025_34
-- EN_064_32
-- EN_077_23
-- EN_116_29
 
 ## *why*
 
@@ -146,6 +138,7 @@ Text in italics has been verified by listening to the audio (mostly *no* and *ye
 
 - EN_001_1 *yeah* like *Is that right?* **#2**
 - EN_003_30 *yeah*
+- EN_009_16 *yeah*
 - EN_010_13 *yeah* like *I understand you*
 - EN_017_18 *yeah* like *I understand you* **#3**
 - EN_017_3 *yeah* like *Yes, that's true*
@@ -155,8 +148,8 @@ Text in italics has been verified by listening to the audio (mostly *no* and *ye
 - EN_077_32 *yeah*
 - EN_116_27 *yeah*
 - EN_117_5 *(laughter) yeah*
-- EN_127_7 *yeah* slow, drawn out **#1**
 - EN_117_7 *yeah*
+- EN_127_7 *yeah* slow, drawn out **#1**
 
 ## *yes*
 
@@ -172,13 +165,21 @@ Text in italics has been verified by listening to the audio (mostly *no* and *ye
 
 ## other
 
+- EN_015_37 *oh okay*
 - EN_078_32:  Mmm!
 - EN_085_11: -ha!
 - EN_099_25:  Ahhh!
 - EN_099_6 *yeah(?) yeah*
 - EN_111_39:  um
+- EN_122_26 *oh-um*
 - EN_126_2:  Um,  yeah?
 - EN_130_4:  No,  yeah,
 - EN_132_39: -hmm.
 - EN_132_6:  Uh...
 - EN_132_8:  Uh...  yeah,
+- EN_070_11 *okay okay*
+- EN_114_25 *(?) okay*
+- EN_025_34 *uh-huh* (I am unsure of this text)
+- EN_064_32 *(laughter)*
+- EN_077_23 *yeah yeah*
+- EN_116_29 *ah*
