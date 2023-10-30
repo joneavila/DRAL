@@ -8,7 +8,7 @@ from typing import Tuple
 
 import pandas as pd
 
-from consts import RANDOM_STATE_VAL
+RANDOM_STATE_VAL = 42
 
 
 def main():
@@ -121,5 +121,4 @@ def partition_data(
 
 
 if __name__ == "__main__":
-
     main()
